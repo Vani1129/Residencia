@@ -1,0 +1,26 @@
+﻿{% load static %}
+
+<!DOCTYPE html>
+<html lang="en">
+  {% include "cms/includes/head.html" %}
+  <body class="hold-transition light-skin sidebar-mini theme-primary fixed">
+    <div class="wrapper">
+      <div id="loader"></div>
+      {% include "cms/includes/header.html" %}
+      {% include "cms/includes/main_sidebar.html" %}
+      {% include 'cms/includes/toast.html' %}
+      <!-- Content Wrapper. Contains page content -->
+      <div class="content-wrapper">
+        <div class="container-full">
+          {% block content %}
+          {% endblock %}
+        </div>
+      </div>
+      {% include "cms/includes/footer.html" %}
+      <div class="control-sidebar-bg"></div>
+      {% include "cms/includes/control_sidebar.html" %}
+    </div>
+    {% include "cms/includes/sticky_toolbar.html" %}
+    {% include "cms/includes/script.html" %}
+  </body>
+</html>

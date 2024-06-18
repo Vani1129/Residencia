@@ -1,0 +1,330 @@
+{% load static %}
+<section class="content">			
+    <div class="row">
+        <div class="col-xl-6 col-12">
+            <div class="box">
+                <div class="box-header no-border pb-0">
+                    <h4 class="box-title">Residential Community Dashboard</h4>
+                </div>
+                <div class="box-body">
+                    <div class="row">
+                        <div class="col-md-6 col-12">
+                            <div class="info-box bg-transparent no-shadow px-0 min-h-80">
+                                <span class="info-box-icon bg-danger-light rounded-circle"><i class="fa fa-users"></i></span>
+                                <div class="info-box-content pb-0">
+                                  <p class="mb-0 fs-16">Total Residents</p>
+                                  <h2 class="my-0 fw-500 text-danger">842</h2>
+                                </div>
+                             </div>
+                        </div>
+                        <div class="col-md-6 col-12">
+                            <div class="info-box bg-transparent no-shadow px-0 min-h-80">
+                                <span class="info-box-icon bg-success-light rounded-circle"><i class="fa fa-user-shield"></i></span>
+                                <div class="info-box-content pb-0">
+                                  <p class="mb-0 fs-16">Total Security Guard</p>
+                                  <h2 class="my-0 fw-500 text-success">748</h2>
+                                </div>
+                             </div>
+                        </div>
+                        <div class="col-md-6 col-12">
+                            <div class="info-box bg-transparent no-shadow px-0 min-h-80">
+                                <span class="info-box-icon bg-primary-light rounded-circle"><i class="fa fa-building"></i></span>
+                                <div class="info-box-content pb-0">
+                                  <p class="mb-0 fs-16">Total Building</p>
+                                  <h2 class="my-0 fw-500 text-info">842</h2>
+                                </div>
+                             </div>
+                        </div>
+                        <div class="col-md-6 col-12">
+                            <div class="info-box bg-transparent no-shadow px-0 min-h-80">
+                                <span class="info-box-icon bg-info-light rounded-circle"> <i class="fa fa-home"></i></span>
+                                <div class="info-box-content pb-0">
+                                  <p class="mb-0 fs-16">Total Bungalow </p>
+                                  <h2 class="my-0 fw-500 text-info">748</h2>
+                                </div>
+                             </div>
+                        </div>
+                    </div>
+                </div>
+            </div>	
+        </div> 
+        <div class="col-xl-3 col-lg-6 col-12">
+            <div class="box">
+                <div class="box-header no-border pb-0">
+                    <h4 class="box-title">Analytic</h4>
+                </div>
+                <div class="box-body">					
+                    <div id="analytics_chart"></div>																
+                    <div>
+                        <div class="d-flex gap-5 mt-30 justify-content-between">
+                            <h4>
+                                <span class="fs-12"> Booked</span> <br>60.01%
+                            </h4>
+                            <h4>
+                                <span class="fs-12"> Cancelled</span> <br>30.01%
+                            </h4>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-lg-6 col-12">
+            <div class="box">
+                <div class="box-header no-border pb-0">
+                    <h4 class="box-title">Expenses</h4>
+                </div>
+                <div class="box-body">
+                    <div id="chart-main"></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-5 col-12">
+            <div class="box">
+                <div class="box-header no-border pb-0">
+                    <h4 class="box-title">Booking Overview</h4>
+                </div>
+                <div class="box-body">
+                    <div class="d-flex align-items-center justify-content-start gap-4">
+                        <div class="d-flex align-items-center">
+                            <div>
+                                <h6 class="mb-2 text-fade">Current year</h6>
+                                <h5 class="fw-400 my-0">$125K <span class="fs-12 text-success">(+19.2%)</span></h5>
+                            </div>
+                        </div>
+                        <div class="d-flex align-items-center mx-10">
+                            <div>
+                                <h6 class="mb-2 text-fade">Last year</h6>
+                                <h5 class="fw-400 my-0">$59K <span class="fs-12 text-danger">(-6.5%)</span></h5>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="charts_widget_2_chart"></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-lg-6 col-12">
+            <div class="box">		
+                <div class="box-body">
+                    <div class="d-flex">
+                        <i class="wi-day-sunny fs-40 me-20"></i>
+                        <div class="fs-40 grey-700">27°<span class="fs-30">C</span></div>
+                    </div>
+                    <div class="text-end">
+                        <p class="m-0">Thes, Sep 20th 2021</p>
+                        <h4 class="m-0 fw-7">Kansas City</h4>
+                    </div>
+                </div>
+            </div>
+            <div class="box">
+                <div class="box-header no-border pb-0">
+                    <h4 class="box-title">Total Earning</h4>
+                </div>
+                <div class="box-body">
+                    <h3 class="mt-0"><small>$</small>5024.23</h3>
+                    <div id="recent_trend"></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-4 col-lg-6 col-12">					
+            <div class="box">
+                <div class="box-header no-border pb-0">
+                    <h4 class="box-title">Sale by Location</h4>
+                </div>
+                <div class="box-body">
+                    <div id="world-map-markers" class="map-home h-220"></div>
+                    <div class="row row-cols-2 mt-30">
+                        <div class="col">
+                            <div class="d-flex justify-content-between">
+                                <p><span class="badge badge-primary badge-dot me-5"></span>Monaco</p>
+                                <p>$15k</p>
+                            </div>
+                        </div>
+                        <div class="col">									
+                            <div class="d-flex justify-content-between">
+                                <p><span class="badge badge-success badge-dot me-5"></span>Maldives</p>
+                                <p>$19k</p>
+                            </div>									
+                        </div>
+                        <div class="col">
+                            <div class="d-flex justify-content-between">
+                                <p><span class="badge badge-info badge-dot me-5"></span>Palau</p>
+                                <p>$9k</p>
+                            </div>									
+                        </div>
+                        <div class="col">									
+                            <div class="d-flex justify-content-between">
+                                <p><span class="badge badge-warning badge-dot me-5"></span>Singapore</p>
+                                <p>$21k</p>
+                            </div>
+                        </div>
+                        <div class="col">
+                            <div class="d-flex justify-content-between">
+                                <p><span class="badge badge-danger badge-dot me-5"></span>Barbados</p>
+                                <p>$18k</p>
+                            </div>									
+                        </div>
+                        <div class="col">
+                            <div class="d-flex justify-content-between">
+                                <p><span class="badge badge-dark badge-dot me-5"></span>Malta</p>
+                                <p>$16k</p>
+                            </div>									
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-12">
+            <div class="box">
+                <div class="box-header no-border pb-0">
+                    <h4 class="box-title">Booking History</h4>
+                    <ul class="box-controls pull-right">
+                      <li class="dropdown">
+                        <a data-bs-toggle="dropdown" href="#" class="btn btn-danger-light px-10 base-font">View By</a>
+                        <div class="dropdown-menu dropdown-menu-end">
+                          <a class="dropdown-item" href="#"><i class="ti-import"></i> Hotel</a>
+                          <a class="dropdown-item" href="#"><i class="ti-export"></i> Month</a>
+                          <a class="dropdown-item" href="#"><i class="ti-printer"></i> Date</a>
+                        </div>
+                      </li>
+                    </ul>
+                </div>
+                <div class="box-body pb-0">
+                    <div class="table-responsive">
+                        <table class="table no-border table-striped">
+                            <tbody>
+                                <tr>										
+                                    <td class="w-50">
+                                        <div class="bg-lightest h-50 w-50 l-h-50 rounded text-center overflow-hidden">
+                                            <img src="../images/gallery/thumb-sm/1.jpg" class="h-50 align-self-end" alt="">
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <a href="#" class="text-dark fw-500 hover-primary fs-16">Inaya Garden</a>
+                                        <span class="text-fade d-block">India</span>
+                                    </td>
+                                    <td>
+                                        <span class="text-fade fs-16">
+                                            05 Nights
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <i class="me-5 mdi mdi-airplane-takeoff"></i> 02 Nov 2021  
+                                    </td>
+                                    <td>
+                                        <i class="me-5 mdi mdi-airplane-landing"></i> 12 Nov 2021
+                                    </td>
+                                    <td>
+                                        <span class="text-fade fs-16">
+                                            02 Adults
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <span class="text-dark fw-500 fs-16">
+                                            $120
+                                        </span>
+                                    </td>
+                                </tr>
+                                <tr>										
+                                    <td class="w-50">
+                                        <div class="bg-lightest h-50 w-50 l-h-50 rounded text-center overflow-hidden">
+                                            <img src="../images/gallery/thumb-sm/2.jpg" class="h-50 align-self-end" alt="">
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <a href="#" class="text-dark fw-500 hover-primary fs-16">Pacific Velly</a>
+                                        <span class="text-fade d-block">Malaysia</span>
+                                    </td>
+                                    <td>
+                                        <span class="text-fade fs-16">
+                                            04 Nights
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <i class="me-5 mdi mdi-airplane-takeoff"></i> 18 Nov 2021  
+                                    </td>
+                                    <td>
+                                        <i class="me-5 mdi mdi-airplane-landing"></i> 27 Nov 2021
+                                    </td>
+                                    <td>
+                                        <span class="text-fade fs-16">
+                                            04 Adults
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <span class="text-dark fw-500 fs-16">
+                                            $240
+                                        </span>
+                                    </td>
+                                </tr>
+                                <tr>										
+                                    <td class="w-50">
+                                        <div class="bg-lightest h-50 w-50 l-h-50 rounded text-center overflow-hidden">
+                                            <img src="../images/gallery/thumb-sm/3.jpg" class="h-50 align-self-end" alt="">
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <a href="#" class="text-dark fw-500 hover-primary fs-16">Dallas View</a>
+                                        <span class="text-fade d-block">Tailland</span>
+                                    </td>
+                                    <td>
+                                        <span class="text-fade fs-16">
+                                            03 Nights
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <i class="me-5 mdi mdi-airplane-takeoff"></i> 06 Dec 2021  
+                                    </td>
+                                    <td>
+                                        <i class="me-5 mdi mdi-airplane-landing"></i> 14 Dec 2021
+                                    </td>
+                                    <td>
+                                        <span class="text-fade fs-16">
+                                            02 Adults
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <span class="text-dark fw-500 fs-16">
+                                            $154
+                                        </span>
+                                    </td>
+                                </tr>
+                                <tr>										
+                                    <td class="w-50">
+                                        <div class="bg-lightest h-50 w-50 l-h-50 rounded text-center overflow-hidden">
+                                            <img src="../images/gallery/thumb-sm/4.jpg" class="h-50 align-self-end" alt="">
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <a href="#" class="text-dark fw-500 hover-primary fs-16">Seagal Garden</a>
+                                        <span class="text-fade d-block">Indonesia</span>
+                                    </td>
+                                    <td>
+                                        <span class="text-fade fs-16">
+                                            05 Nights
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <i class="me-5 mdi mdi-airplane-takeoff"></i> 02 Dec 2021  
+                                    </td>
+                                    <td>
+                                        <i class="me-5 mdi mdi-airplane-landing"></i> 12 Dec 2021
+                                    </td>
+                                    <td>
+                                        <span class="text-fade fs-16">
+                                            04 Adults
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <span class="text-dark fw-500 fs-16">
+                                            $520
+                                        </span>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>  
+        </div>	
+    </div>
+</section>

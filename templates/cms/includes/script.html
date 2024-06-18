@@ -1,0 +1,26 @@
+
+{% load static %}
+
+<script src="{% static 'js/vendors.min.js' %}"></script>
+<script src="{% static 'js/pages/chat-popup.js' %}"></script>
+<script src="{% static 'icons/feather-icons/feather.min.js' %}"></script>
+
+<script src="{% static 'vendor_components/apexcharts-bundle/dist/apexcharts.js' %}"></script>
+<script src="{% static 'vendor_components/jvectormap/lib2/jquery-jvectormap-2.0.2.min.js' %}"></script>
+<script src="{% static 'vendor_components/jvectormap/lib2/jquery-jvectormap-world-mill-en.js' %}"></script>
+
+<!-- Master Admin App -->
+<script src="{% static 'js/template.js' %}"></script>
+<script src="{% static 'js/pages/dashboard3.js' %}"></script>
+
+<script>
+    $(document).ready(function () {
+        // Show the toast messages
+        $('.toast').toast('show');
+
+        // Hide the toast messages after 10 seconds
+        setTimeout(function () {
+            $('.toast').toast('hide');
+        }, 5000);
+    });
+</script>

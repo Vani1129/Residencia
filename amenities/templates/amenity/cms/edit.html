@@ -1,0 +1,20 @@
+{% extends 'base.html' %} 
+{% block title %}Edit Amenity{% endblock %} 
+{% load crispy_forms_tags %}
+
+{% block content %}
+<div class="container mt-5">
+  <div class="row justify-content-center">
+    <div class="col-lg-8 col-md-10 col-sm-12">
+      <div class="card">
+        <div class="card-header">
+          <h4 class="card-title">Edit Amenity</h4>
+        </div>
+        <div class="card-body">
+          <form method="post">{% csrf_token %} {% crispy eform %}</form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

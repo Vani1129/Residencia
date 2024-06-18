@@ -1,0 +1,481 @@
+{% comment %} <!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Login</title>
+    <link
+      rel="stylesheet"
+      href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css"
+    />
+    <style>
+      body {
+        background-color: #f8f9fa;
+        height: 100vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
+      .form-container {
+        background-color: #ece9f9;
+        padding: 20px;
+        border-radius: 10px;
+        box-shadow: 0px 0px 10px 0px rgba(0, 0, 0, 0.1);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="form-container">
+        <h2>Login</h2>
+        {% if messages %} {% for message in messages %}
+        <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+        {% endfor %} {% endif %}
+        <form method="post" action="{% url 'login' %}">
+          {% csrf_token %}
+          <div class="form-group">
+            <label for="identifier">Email or Phone Number:</label>
+            <input
+              type="text"
+              id="identifier"
+              name="identifier"
+              class="form-control"
+              required
+            />
+          </div>
+          <div class="form-group">
+            <label for="otp">OTP:</label>
+            <input
+              type="text"
+              id="otp"
+              name="otp"
+              class="form-control"
+              required
+            />
+          </div>
+          <button type="button" id="generate-otp" class="btn btn-secondary">
+            Generate OTP
+          </button>
+          <button type="submit" class="btn btn-primary">Login</button>
+        </form>
+        <p>
+          Don't have an account? <a href="{% url 'register' %}">Create one</a>.
+        </p>
+      </div>
+    </div>
+
+    <!-- jQuery -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+
+    <!-- Inside the <script> tag in your HTML template -->
+    <script>
+      $(document).ready(function () {
+        $("#generate-otp").click(function () {
+          var identifier = $("#identifier").val();
+          if (!identifier) {
+            alert("Please enter your email or phone number first.");
+            return;
+          }
+          $.ajax({
+            url: "{% url 'send_otp' %}",
+            type: "POST",
+            data: {
+              identifier: identifier,
+              csrfmiddlewaretoken: "{{ csrf_token }}",
+            },
+            success: function (response) {
+              alert(
+                "OTP generated successfully. Please check your email or phone."
+              );
+            },
+            error: function (xhr, errmsg, err) {
+              alert(
+                "An error occurred while generating OTP: " + xhr.responseText
+              );
+            },
+          });
+        });
+      });
+    </script>
+  </body>
+</html>
+{% endcomment %} {% load static %}
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Login</title>
+    <link
+      href="https://fonts.googleapis.com/css?family=Poppins"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css"
+    />
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+    <style>
+      /* BASIC */
+      html {
+        height: 100%;
+      }
+      body {
+        font-family: "Poppins", sans-serif;
+        height: 100%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        margin: 0;
+        overflow: hidden;
+      }
+      video {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transform: translate(-50%, -50%);
+        z-index: -2;
+      }
+      .video-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.5); /* Adjust the transparency here */
+        z-index: -1;
+      }
+      a {
+        color: #92badd;
+        display: inline-block;
+        text-decoration: none;
+        font-weight: 400;
+      }
+      h2 {
+        text-align: center;
+        font-size: 16px;
+        font-weight: 600;
+        text-transform: uppercase;
+        display: inline-block;
+        margin: 40px 8px 10px 8px;
+        color: #cccccc;
+      }
+      .wrapper {
+        display: flex;
+        align-items: center;
+        flex-direction: column;
+        justify-content: center;
+        width: 100%;
+        min-height: 100%;
+        padding: 20px;
+        position: relative;
+      }
+      #formContent {
+        -webkit-border-radius: 10px 10px 10px 10px;
+        border-radius: 10px 10px 10px 10px;
+        background: #c08081;
+        padding: 30px;
+        width: 100%;
+        height: 550%;
+        max-width: 550px;
+        position: relative;
+        padding: 0px;
+        -webkit-box-shadow: 0 20px 40px 0 rgba(0, 0, 0, 0.3);
+        box-shadow: 0 30px 60px 0 rgba(0, 0, 0, 0.3);
+        text-align: center;
+      }
+      #formFooter {
+        background-color: #f6f6f6;
+        border-top: 1px solid #dce8f1;
+        padding: 25px;
+        text-align: center;
+        -webkit-border-radius: 0 0 10px 10px;
+        border-radius: 0 0 10px 10px;
+      }
+      h2.inactive {
+        color: #cccccc;
+      }
+      h2.active {
+        color: #0d0d0d;
+        border-bottom: 5px solid #5fbae9;
+      }
+      input[type="button"],
+      input[type="submit"],
+      input[type="reset"] {
+        background-color: #56baed;
+        border: none;
+        color: white;
+        padding: 15px 40px;
+        text-align: center;
+        text-decoration: none;
+        display: inline-block;
+        text-transform: uppercase;
+        font-size: 13px;
+        -webkit-box-shadow: 0 10px 30px 0 rgba(95, 186, 233, 0.4);
+        box-shadow: 0 0px 20px 0 rgba(95, 186, 233, 0.4);
+        -webkit-border-radius: 5px 5px 5px 5px;
+        border-radius: 5px 5px 5px 5px;
+        margin: 5px;
+        -webkit-transition: all 0.3s ease-in-out;
+        -moz-transition: all 0.3s ease-in-out;
+        -ms-transition: all 0.3s ease-in-out;
+        -o-transition: all 0.3s ease-in-out;
+        transition: all 0.3s ease-in-out;
+      }
+      input[type="button"]:hover,
+      input[type="submit"]:hover,
+      input[type="reset"]:hover {
+        background-color: #39ace7;
+      }
+      input[type="button"]:active,
+      input[type="submit"]:active,
+      input[type="reset"]:active {
+        -moz-transform: scale(0.95);
+        -webkit-transform: scale(0.95);
+        -o-transform: scale(0.95);
+        -ms-transform: scale(0.95);
+        transform: scale(0.95);
+      }
+      input[type="text"],
+      input[type="password"] {
+        background-color: #f6f6f6;
+        border: none;
+        color: #0d0d0d;
+        padding: 15px 32px;
+        text-align: center;
+        text-decoration: none;
+        display: inline-block;
+        font-size: 16px;
+        margin: 5px;
+        width: 85%;
+        border: 2px solid #f6f6f6;
+        -webkit-transition: all 0.5s ease-in-out;
+        -moz-transition: all 0.5s ease-in-out;
+        -ms-transition: all 0.5s ease-in-out;
+        -o-transition: all 0.5s ease-in-out;
+        transition: all 0.5s ease-in-out;
+        -webkit-border-radius: 5px 5px 5px 5px;
+        border-radius: 5px 5px 5px 5px;
+      }
+      input[type="text"]:focus,
+      input[type="password"]:focus {
+        background-color: #fff;
+        border-bottom: 2px solid #5fbae9;
+      }
+      input[type="text"]::placeholder,
+      input[type="password"]::placeholder {
+        color: #cccccc;
+      }
+      .fadeInDown {
+        -webkit-animation-name: fadeInDown;
+        animation-name: fadeInDown;
+        -webkit-animation-duration: 1s;
+        animation-duration: 1s;
+        -webkit-animation-fill-mode: both;
+        animation-fill-mode: both;
+      }
+      @-webkit-keyframes fadeInDown {
+        0% {
+          opacity: 0;
+          -webkit-transform: translate3d(0, -100%, 0);
+          transform: translate3d(0, -100%, 0);
+        }
+        100% {
+          opacity: 1;
+          -webkit-transform: none;
+          transform: none;
+        }
+      }
+      @keyframes fadeInDown {
+        0% {
+          opacity: 0;
+          -webkit-transform: translate3d(0, -100%, 0);
+          transform: translate3d(0, -100%, 0);
+        }
+        100% {
+          opacity: 1;
+          -webkit-transform: none;
+          transform: none;
+        }
+      }
+      @-webkit-keyframes fadeIn {
+        from {
+          opacity: 0;
+        }
+        to {
+          opacity: 1;
+        }
+      }
+      @-moz-keyframes fadeIn {
+        from {
+          opacity: 0;
+        }
+        to {
+          opacity: 1;
+        }
+      }
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+        }
+        to {
+          opacity: 1;
+        }
+      }
+      .fadeIn {
+        opacity: 0;
+        -webkit-animation: fadeIn ease-in 1;
+        -moz-animation: fadeIn ease-in 1;
+        animation: fadeIn ease-in 1;
+        -webkit-animation-fill-mode: forwards;
+        -moz-animation-fill-mode: forwards;
+        animation-fill-mode: forwards;
+        -webkit-animation-duration: 1s;
+        -moz-animation-duration: 1s;
+        animation-duration: 1s;
+      }
+      .fadeIn.first {
+        -webkit-animation-delay: 0.4s;
+        -moz-animation-delay: 0.4s;
+        animation-delay: 0.4s;
+      }
+      .fadeIn.second {
+        -webkit-animation-delay: 0.6s;
+        -moz-animation-delay: 0.6s;
+        animation-delay: 0.6s;
+      }
+      .fadeIn.third {
+        -webkit-animation-delay: 0.8s;
+        -moz-animation-delay: 0.8s;
+        animation-delay: 0.8s;
+      }
+      .fadeIn.fourth {
+        -webkit-animation-delay: 1s;
+        -moz-animation-delay: 1s;
+        animation-delay: 1s;
+      }
+      .underlineHover:after {
+        display: block;
+        left: 0;
+        bottom: -10px;
+        width: 0;
+        height: 2px;
+        background-color: #56baed;
+        content: "";
+        transition: width 1.2s;
+      }
+      .underlineHover:hover {
+        color: #0d0d0d;
+      }
+      .underlineHover:hover:after {
+        width: 100%;
+      }
+      *:focus {
+        outline: none;
+      }
+      #icon {
+        width: 60%;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      .button-group {
+        display: flex;
+        justify-content: center;
+      }
+    </style>
+  </head>
+  <body>
+    <video autoplay muted loop>
+        <source src="{% static 'video/background.mp4' %}" type="video/mp4" />
+        Your browser does not support HTML5 video.
+      </video>
+      <div class="video-overlay"></div>
+      <div class="wrapper fadeInDown">
+        <div id="formContent">
+          <!-- Tabs Titles -->
+          <h3 class="active">Login</h3>
+   
+          <!-- Icon -->
+          {% comment %}
+          <div class="fadeIn first">
+            <img src="{% static 'images/reg.png' %}" id="icon" alt="User Icon" />
+          </div>
+          {% endcomment %}
+          <form method="post" action="{% url 'login' %}">
+            {% csrf_token %}
+            <!-- Input fields for phone number and OTP -->
+            <input
+              type="text"
+              id="identifier"
+              class="fadeIn second"
+              name="identifier"
+              placeholder="Phone Number"
+              required
+            />
+            <input
+              type="password"
+              id="otp"
+              class="fadeIn third"
+              name="otp"
+              placeholder="OTP"
+              required
+            />
+            <!-- Button group for OTP generation and login -->
+            <div class="button-group">
+              <input
+                type="button"
+                id="generate-otp"
+                class="fadeIn fourth"
+                value="Generate OTP"
+              />
+              <input type="submit" class="fadeIn fourth" value="Log In" />
+            </div>
+          </form>
+   
+          <!-- Display messages from Django's message framework -->
+          {% if messages %}
+          {% for message in messages %}
+          <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+          {% endfor %}
+          {% endif %}
+   
+          <!-- JavaScript code with a more user-friendly error message -->
+          <script>
+            $(document).ready(function () {
+              $("#generate-otp").click(function () {
+                var identifier = $("#identifier").val();
+                if (!identifier) {
+                  alert("Please enter your phone number first.");
+                  return;
+                }
+                $.ajax({
+                    url: "{% url 'send_otp' %}",
+                    type: "POST",
+                    data: {
+                      identifier: identifier,
+                      csrfmiddlewaretoken: $('input[name="csrfmiddlewaretoken"]').val(),
+                    },
+                    success: function (response) {
+                      if (response.success) {
+                        alert(response.message);
+                      } else {
+                        alert("Error: " + response.message);
+                      }
+                    },
+                    error: function (xhr, errmsg, err) {
+                      alert("An error occurred while generating OTP: " + xhr.responseText);
+                    },
+                  });
+              });
+            });
+          </script>
+        </div>
+      </div>
+      {% include 'cms/includes/toast.html' %}
+  </body>
+  
+</html>

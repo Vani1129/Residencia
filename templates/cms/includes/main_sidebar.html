@@ -1,0 +1,352 @@
+{% load static %}
+
+{% if user.is_authenticated %}
+<aside class="main-sidebar" style="background-color: #F5F5EF; color: darkblue;">
+    <section class="sidebar position-relative">
+        <div class="multinav">
+            <div class="multinav-scroll" style="height: 100%;">
+                <ul class="sidebar-menu" data-widget="tree">
+                    <li>
+                        <a href="{% url 'home' %}">
+                            <i data-feather="monitor" style="color: black;"></i>
+                            <span style="color: black;">Dashboard</span>
+                        </a>
+                    </li>
+                    {% if user.is_superuser %}
+                    <li class="header" style="color: darkblue;">Admin Site </li>
+                    <li class="treeview">
+                        <a href="#">
+                            <i data-feather="user" style="color: black;"></i>
+                            <span style="color: black;">Super Admin</span>
+                            <span class="pull-right-container">
+                                <i class="fa fa-angle-right pull-right"></i>
+                            </span>
+                        </a>
+                        <ul class="treeview-menu">
+                            <li><a href="{% url 'show_societies' %}" id="show_societies"><i class="icon-Commit"></i>Societies</a></li>
+                            {% if request.resolver_match.kwargs.society_id  %}
+                            
+                            <li><a href="{% url 'society_id_admin_dashboard' request.resolver_match.kwargs.society_id %}"><i class="icon-Commit"></i>Register Society</a></li>
+                            {% endif %}
+                        </ul>
+                    </li>
+                    {% endif %}
+                        {% comment %} {% if selected_society %}
+                            <!-- Sidebar items specific to the selected society -->
+                            <li class="treeview">
+                                <a href="#">
+                                    <i data-feather="user" style="color: black;"></i>
+                                    <span style="color: black;">Super Admin</span>
+                                    <span class="pull-right-container">
+                                        <i class="fa fa-angle-right pull-right"></i>
+                                    </span>
+                                </a>
+                                <ul class="treeview-menu">
+                                    <li><a href="{% url 'show_societies' %}" id="show_societies"><i class="icon-Commit"></i>Societies</a></li>
+                                    <li><a href="{% url 'admin_dashboard' %}"><i class="icon-Commit"></i>Register Society</a></li>
+                                </ul>
+                            </li>
+                        {% endif %}
+                     {% endcomment %}
+                    {% if request.resolver_match.kwargs.society_id and user.is_superuser  %}
+                        
+                    <div id="society-menu-items" style="display: block;">
+                        <!-- Render sidebar menu items for the selected society -->
+                        <ul class="sidebar-menu">
+                        <li class="treeview">
+                            <a href="#">
+                                <i data-feather="user-plus" style="color: black;"></i>
+                                <span style="color: black;">User Management</span>
+                                <span class="pull-right-container">
+                                    <i class="fa fa-angle-right pull-right"></i>
+                                </span>
+                            </a>
+                            <ul class="treeview-menu">
+                                <li><a href="{% url 'society_id_subadmin_list' request.resolver_match.kwargs.society_id %}"><i class="icon-Commit"></i>Committee Member</a></li>
+                                <li><a href="{% url 'subadmin_list' %}"><i class="icon-Commit"></i>Gate Keeper</a></li>
+                            </ul>
+                        </li>
+                        <li class="treeview">
+                            <a href="#">
+                                <i data-feather="shield" style="color: black;"></i>
+                                <span style="color: black;">Visitor Management</span>
+                                <span class="pull-right-container">
+                                    <i class="fa fa-angle-right pull-right"></i>
+                                </span>
+                            </a>
+                            <ul class="treeview-menu">
+                                <li><a href="#"><i class="icon-Commit"></i>Visitor Request</a></li>
+                            </ul>
+                        </li>
+                        <li class="treeview">
+                            <a href="#">
+                                <i data-feather="users" style="color: black;"></i>
+                                <span style="color: black;">Manage Residents</span>
+                                <span class="pull-right-container">
+                                    <i class="fa fa-angle-right pull-right"></i>
+                                </span>
+                            </a>
+                            <ul class="treeview-menu">
+                                <li><a href="#"><i class="icon-Commit"></i>Block List</a></li>
+                                <li><a href="#"><i class="icon-Commit"></i>Unit List</a></li>
+                                <li><a href="#"><i class="icon-Commit"></i>Resident List</a></li>
+                            </ul>
+                        </li>
+                        <li class="treeview">
+                            <a href="#">
+                                <i data-feather="shopping-bag" style="color: black;"></i>
+                                <span style="color: black;">Amenities</span>
+                                <span class="pull-right-container">
+                                    <i class="fa fa-angle-right pull-right"></i>
+                                </span>
+                            </a>
+                            <ul class="treeview-menu">
+                                <li><a href="{% url 'amenities' %}"><i class="icon-Commit"></i>Add Amenities</a></li>
+                                <li><a href="#"><i class="icon-Commit"></i>Booking</a></li>
+                            </ul>
+                        </li>
+                        <li class="treeview">
+                            <a href="#">
+                                <i data-feather="message-circle" style="color: black;"></i>
+                                <span style="color: black;">Announcements</span>
+                                <span class="pull-right-container">
+                                    <i class="fa fa-angle-right pull-right"></i>
+                                </span>
+                            </a>
+                            <ul class="treeview-menu">
+                                <li><a href="#"><i class="icon-Commit"></i>Event, News, Notice</a></li>
+                            </ul>
+                        </li>
+                        <li class="treeview">
+                            <a href="#">
+                                <i data-feather="dollar-sign" style="color: black;"></i>
+                                <span style="color: black;">Financial Management</span>
+                                <span class="pull-right-container">
+                                    <i class="fa fa-angle-right pull-right"></i>
+                                </span>
+                            </a>
+                            <ul class="treeview-menu">
+                                <li><a href="#"><i class="icon-Commit"></i>Maintenance</a></li>
+                                <li><a href="#"><i class="icon-Commit"></i>Invoices</a></li>
+                                <li><a href="#"><i class="icon-Commit"></i>Expense</a></li>
+                            </ul>
+                        </li>
+                        <li class="treeview">
+                            <a href="#">
+                                <i data-feather="image" style="color: black;"></i>
+                                <span style="color: black;">Gallery</span>
+                                <span class="pull-right-container">
+                                    <i class="fa fa-angle-right pull-right"></i>
+                                </span>
+                            </a>
+                            <ul class="treeview-menu">
+                                <li><a href="#"><i class="icon-Commit"></i>Add image</a></li>
+                            </ul>
+                        </li>
+                    </ul>
+                    </div>
+                    {% endif %}
+
+                    {% if user.is_admin and not user.is_superuser %}
+                        <!-- Admin Menu -->
+                        <li class="treeview">
+                            <a href="#">
+                                <i data-feather="user-plus" style="color: black;"></i>
+                                <span style="color: black;">User Management</span>
+                                <span class="pull-right-container">
+                                    <i class="fa fa-angle-right pull-right"></i>
+                                </span>
+                            </a>
+                            <ul class="treeview-menu">
+                                <li><a href="{% url 'subadmin_list' %}"><i class="icon-Commit"></i>Committee Member</a></li>
+                                <li><a href="{% url 'subadmin_list' %}"><i class="icon-Commit"></i>Gate Keeper</a></li>
+                            </ul>
+                        </li>
+                        <li class="treeview">
+                            <a href="#">
+                                <i data-feather="shield" style="color: black;"></i>
+                                <span style="color: black;">Visitor Management</span>
+                                <span class="pull-right-container">
+                                    <i class="fa fa-angle-right pull-right"></i>
+                                </span>
+                            </a>
+                            <ul class="treeview-menu">
+                                <li><a href="#"><i class="icon-Commit"></i>Visitor Request</a></li>
+                            </ul>
+                        </li>
+                        <li class="treeview">
+                            <a href="#">
+                                <i data-feather="users" style="color: black;"></i>
+                                <span style="color: black;">Manage Residents</span>
+                                <span class="pull-right-container">
+                                    <i class="fa fa-angle-right pull-right"></i>
+                                </span>
+                            </a>
+                            <ul class="treeview-menu">
+                                <li><a href="#"><i class="icon-Commit"></i>Block List</a></li>
+                                <li><a href="#"><i class="icon-Commit"></i>Unit List</a></li>
+                                <li><a href="#"><i class="icon-Commit"></i>Resident List</a></li>
+                            </ul>
+                        </li>
+                        <li class="treeview">
+                            <a href="#">
+                                <i data-feather="shopping-bag" style="color: black;"></i>
+                                <span style="color: black;">Amenities</span>
+                                <span class="pull-right-container">
+                                    <i class="fa fa-angle-right pull-right"></i>
+                                </span>
+                            </a>
+                            <ul class="treeview-menu">
+                                <li><a href="{% url 'amenities' %}"><i class="icon-Commit"></i>Add Amenities</a></li>
+                                <li><a href="#"><i class="icon-Commit"></i>Booking</a></li>
+                            </ul>
+                        </li>
+                        <li class="treeview">
+                            <a href="#">
+                                <i data-feather="message-circle" style="color: black;"></i>
+                                <span style="color: black;">Announcements</span>
+                                <span class="pull-right-container">
+                                    <i class="fa fa-angle-right pull-right"></i>
+                            </span>
+                        </a>
+                        <ul class="treeview-menu">
+                            <li><a href="#"><i class="icon-Commit"></i>Event, News, Notice</a></li>
+                        </ul>
+                    </li>
+                    <li class="treeview">
+                        <a href="#">
+                            <i data-feather="dollar-sign" style="color: black;"></i>
+                            <span style="color: black;">Financial Management</span>
+                            <span class="pull-right-container">
+                                <i class="fa fa-angle-right pull-right"></i>
+                            </span>
+                        </a>
+                        <ul class="treeview-menu">
+                            <li><a href="#"><i class="icon-Commit"></i>Maintenance</a></li>
+                            <li><a href="#"><i class="icon-Commit"></i>Invoices</a></li>
+                            <li><a href="#"><i class="icon-Commit"></i>Expense</a></li>
+                        </ul>
+                    </li>
+                    <li class="treeview">
+                        <a href="#">
+                            <i data-feather="image" style="color: black;"></i>
+                            <span style="color: black;">Gallery</span>
+                            <span class="pull-right-container">
+                                <i class="fa fa-angle-right pull-right"></i>
+                            </span>
+                        </a>
+                        <ul class="treeview-menu">
+                            <li><a href="#"><i class="icon-Commit"></i>Add image</a></li>
+                        </ul>
+                    </li>
+                    
+                    {% endif %}
+                    {% for usr in user.userdetails.all %}
+                        {% if usr %}
+                            {% if usr.role == "committee_member" and not user.is_admin  %}
+
+                    
+                    
+
+                    <li class="header" style="color: darkblue;">Admin Site </li>
+                    <li class="treeview">
+                        <a href="#">
+                            <i data-feather="shield" style="color: black;"></i>
+                            <span style="color: black;">Visitor Management</span>
+                            <span class="pull-right-container">
+                                <i class="fa fa-angle-right pull-right"></i>
+                            </span>
+                        </a>
+                        <ul class="treeview-menu">
+                            
+                            <li><a href="#"><i class="icon-Commit"></i>Visitor Request</a></li>
+                        </ul>
+                    </li>
+                    <li class="treeview">
+                        <a href="#">
+                            <i data-feather="users" style="color: black;"></i>
+                            <span style="color: black;">Manage Residents</span>
+                            <span class="pull-right-container">
+                                <i class="fa fa-angle-right pull-right"></i>
+                            </span>
+                        </a>
+                        <ul class="treeview-menu">
+                            <li><a href="widgets_blog.html"><i class="icon-Commit"><span class="path1"></span><span class="path2"></span></i>Block List</a></li>
+                            <li><a href="widgets_chart.html"><i class="icon-Commit"><span class="path1"></span><span class="path2"></span></i>Unit List</a></li>
+                            <li><a href="widgets_list.html"><i class="icon-Commit"><span class="path1"></span><span class="path2"></span></i>Resident List</a></li>
+                        </ul>
+                    </li>
+                    <li class="treeview">
+                        <a href="#">
+                            <i data-feather="shopping-bag" style="color: black;"></i>
+                            <span style="color: black;">Amenities</span>
+                            <span class="pull-right-container">
+                                <i class="fa fa-angle-right pull-right"></i>
+                            </span>
+                        </a>
+                        <ul class="treeview-menu">
+                            <li><a href="{% url 'amenities' %}"><i class="icon-Commit"><span class="path1"></span><span class="path2"></span></i>Add Amenities</a></li>
+                            <li><a href="ecommerce_cart.html"><i class="icon-Commit"><span class="path1"></span><span class="path2"></span></i>Booking</a></li>
+                        </ul>
+                    </li>
+                    <li class="treeview">
+                        <a href="#">
+                            <i data-feather="message-circle" style="color: black;"></i>
+                            <span style="color: black;">Annoucements</span>
+                            <span class="pull-right-container">
+                                <i class="fa fa-angle-right pull-right"></i>
+                            </span>
+                        </a>
+                        <ul class="treeview-menu">
+                            <li><a href="#"><i class="icon-Commit"><span class="path1"></span><span class="path2"></span></i>Event, New, Notice</a></li>
+                        </ul>
+                    </li>
+                    <li class="treeview">
+                        <a href="#">
+                            <i data-feather="dollar-sign" style="color: black;"></i>
+                            <span style="color: black;">Financial Management</span>
+                            <span class="pull-right-container">
+                                <i class="fa fa-angle-right pull-right"></i>
+                            </span>
+                        </a>
+                        <ul class="treeview-menu">            
+                            <li><a href="ui_grid.html"><i class="icon-Commit"><span class="path1"></span><span class="path2"></span></i>Maintenance</a></li>
+                            <li><a href="ui_badges.html"><i class="icon-Commit"><span class="path1"></span><span class="path2"></span></i>Invoices</a></li>
+                            <li><a href="ui_border_utilities.html"><i class="icon-Commit"><span class="path1"></span><span class="path2"></span></i>Expense</a></li>
+                        </ul>
+                    </li>               
+                    
+                    <li class="treeview">
+                        <a href="#">
+                            <i data-feather="image" style="color: black;"></i>
+                            <span style="color: black;">Gallery</span>
+                            <span class="pull-right-container">
+                                <i class="fa fa-angle-right pull-right"></i>
+                            </span>
+                        </a>
+                        <ul class="treeview-menu">
+                            <li><a href="component_bootstrap_switch.html"><i class="icon-Commit"><span class="path1"></span><span class="path2"></span></i>Add image</a></li>
+                        </ul>
+                    </li>
+                    {% endif %}
+                    {% endif %}
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </section>
+</aside>
+{% endif %}
+{% comment %} 
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        var societyMenuItems = document.getElementById('society-menu-items');
+        var selectedSocietyId = localStorage.getItem('selectedSocietyId');
+        
+        if (selectedSocietyId) {
+            societyMenuItems.style.display = 'block';
+        } else {
+            societyMenuItems.style.display = 'none';
+        }
+    });
+</script> {% endcomment %}

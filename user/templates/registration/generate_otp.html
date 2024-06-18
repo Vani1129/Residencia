@@ -1,0 +1,17 @@
+<!-- generate_otp.html -->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generate OTP</title>
+</head>
+<body>
+    <h1>Generate OTP</h1>
+    <form action="{% url 'generate_otp' %}" method="post">
+        {% csrf_token %}
+        <button type="submit">Generate OTP</button>
+    </form>
+</body>
+</html>
