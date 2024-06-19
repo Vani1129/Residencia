@@ -2,6 +2,11 @@ from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, AbstractUser
 from datetime import datetime, timedelta
 
+class Type(models.Model):
+    name = models.CharField(max_length=100)
+    
+    def __str__(self):
+        return self.name
 
 class UserManager(BaseUserManager):
     def create_user(self, full_name, email, phone_number, password=None, **extra_fields):
@@ -58,7 +63,7 @@ class User(AbstractBaseUser):
 # models.py
 class Society(models.Model):
     society_name = models.CharField(max_length=255)
-    type = models.CharField(max_length=255)
+    type = models.ManyToManyField(Type,related_name="society_type")
     is_active = models.BooleanField(default=True)
 
     def __str__(self):
@@ -92,7 +97,7 @@ class UserDetails(models.Model):
     
     
 class Member(models.Model):
-    society = models.ForeignKey('society.Society', on_delete=models.CASCADE, related_name='members')
+    society = models.ForeignKey('society.Society_profile', on_delete=models.CASCADE, related_name='members')
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='members')
     user_details = models.ForeignKey(UserDetails, on_delete=models.CASCADE, related_name='members')
     flat_number = models.CharField(max_length=20)  # Add this field

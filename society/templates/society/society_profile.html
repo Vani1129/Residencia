@@ -5,7 +5,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Sub Admin List</title>
+    <title>Society Profile List</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
     <style>
         /* Table Styling */
@@ -52,7 +52,6 @@
             vertical-align: middle;
         }
 
-        /* Table and Button Styling (omitted for brevity) */
         .table-header {
             display: flex;
             justify-content: space-between;
@@ -67,13 +66,15 @@
     </style>
 </head>
 <body>
-    <h1>Sub Admin List</h1>
-    <button class="add-button" onclick="window.location.href='{% url 'society_id_add_subadmin' %}'">
-        <i class="fas fa-plus button-icon"></i> Add Sub Admin
+    <h1>Society Profile List</h1>
+    {% if request.user.is_superuser %}
+    <button class="add-button" onclick="window.location.href='{% url 'society_id_create_society_profile' request.resolver_match.kwargs.society_id %}'">
+        <i class="fas fa-plus button-icon"></i> Add Society Profile
     </button>
+    {% endif %}
     <br><br>
     <div class="table-header">
-        <span>Showing {{ subadmins.count }} entries</span>
+        <span>Showing {{ society_profiles.count }} entries</span>
         <input type="text" id="searchInput" placeholder="Search..." oninput="filterTable()">
     </div>
     <br>
@@ -81,32 +82,46 @@
         <thead>
             <tr>
                 <th>ID</th>
-                <th>Name</th>
-                <th>Role</th>
-                <th>Email</th>
-                <th>Phone Number</th>
-                <th>Flat Number</th>
-                <th>Flat Type</th>
+                <th>Society Name</th>
+                <th>Type</th>
+                <th>Total Numbers</th>
+                <th>Address</th>
+                <th>PAN No</th>
+                <th>GST No</th>
+                <th>Registration No</th>
+                <th>City</th>
+                <th>State</th>
+                <th>Zip Code</th>
+                <th>Created At</th>
+                <th>Updated At</th>
                 <th>Action</th>
             </tr>
         </thead>
-        <tbody>
-            {% for subadmin in subadmins %}
-            <tr>
-                <td>{{ subadmin.id }}</td>
-                <td>{{ subadmin.user.full_name }}</td>
-                <td>{{ subadmin.role }}</td>
-                <td>{{ subadmin.user.email }}</td>
-                <td>{{ subadmin.user.phone_number }}</td>
-                <td>{{ subadmin.flat_number }}</td>
-                <td>{{ subadmin.flat_type }}</td>
+        <tbody id="tableBody">
+            {% for society_profile in society_profiles %}
+            <tr id="society-profile-row-{{ society_profile.society_id }}">
+                <td>{{ society_profile.society_id }}</td>
+                <td>{{ society_profile.society_name }}</td>
                 <td>
-
-                    {% comment %} <button class="edit-button" onclick="editSubadmin('{{ subadmin.id }}')">
-                        <i class="fas fa-pencil-alt button-icon"></i>
-                    </button> {% endcomment %}
-                    <a href="{% url 'edit_subadmin' subadmin.pk %}" class="edit-button"><i class="fas fa-pencil-alt button-icon"></i></a>
-                    <button class="delete-button" onclick="deleteSubadmin('{{ subadmin.id }}')">
+                    <ul>
+                        {% for soc in society_profile.society_name.type.all %}
+                            <li>{{ soc }}</li>
+                        {% endfor %}
+                    </ul>
+                </td>
+                <td>{{ society_profile.total_numbers }}</td>
+                <td>{{ society_profile.address }}</td>
+                <td>{{ society_profile.pan_no }}</td>
+                <td>{{ society_profile.gst_no }}</td>
+                <td>{{ society_profile.registration_no }}</td>
+                <td>{{ society_profile.city }}</td>
+                <td>{{ society_profile.state }}</td>
+                <td>{{ society_profile.zip_code }}</td>
+                <td>{{ society_profile.created_at }}</td>
+                <td>{{ society_profile.updated_at }}</td>
+                <td>
+                    <a href="{% url 'edit_society_profile' society_profile.pk %}" class="edit-button"><i class="fas fa-pencil-alt button-icon"></i></a>
+                    <button class="delete-button" onclick="deleteSocietyProfile({{ society_profile.society_id }})">
                         <i class="fas fa-times button-icon"></i>
                     </button>
                 </td>
@@ -115,15 +130,12 @@
         </tbody>
     </table>
 
-    <!-- JavaScript for handling edit action, delete action, and search functionality -->
+    <!-- JavaScript for handling delete action and search functionality -->
     <script>
-        function editSubadmin(subadminId) {
-            window.location.href = '/edit_subadmin/' + subadminId + '/';
-        }
-
-        function deleteSubadmin(subadminId) {
-            if (confirm("Are you sure you want to delete this subadmin?")) {
-                fetch(`/user/delete_subadmin/${subadminId}/`, {
+        function deleteSocietyProfile(societyProfileId) {
+            if (confirm("Are you sure you want to delete this society profile?")) {
+                const deleteUrl = `{% url 'delete_society_profile' society_profile_id=0 %}`.replace('0', societyProfileId);
+                fetch(deleteUrl, {
                     method: 'DELETE',
                     headers: {
                         'X-CSRFToken': '{{ csrf_token }}',
@@ -131,15 +143,17 @@
                     }
                 }).then(response => {
                     if (response.ok) {
-                        document.getElementById(`subadmin-row-${subadminId}`).remove();
-                        window.location.href = '/user/subadmin_list/';
-                        
-                        
+                        document.getElementById(`society-profile-row-${societyProfileId}`).remove();
+                    } else {
+                        alert("Failed to delete the society profile.");
                     }
+                }).catch(error => {
+                    console.error("Error deleting society profile:", error);
+                    alert("An error occurred while trying to delete the society profile.");
                 });
             }
         }
-
+        
         function filterTable() {
             const searchInput = document.getElementById('searchInput').value.toLowerCase();
             const tableRows = document.getElementById('tableBody').getElementsByTagName('tr');

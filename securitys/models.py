@@ -1,7 +1,7 @@
 # models.py
 from django.db import models
 from django.conf import settings  
-from society.models import Society  
+from society.models import Society_profile 
 from user.models import Member  
 
 class Visitor(models.Model):
@@ -22,7 +22,7 @@ class Visitor(models.Model):
 
 
 class MessageBox(models.Model):
-    society_name = models.ForeignKey(Society, on_delete=models.CASCADE, related_name='message_boxes')
+    society_name = models.ForeignKey(Society_profile, on_delete=models.CASCADE, related_name='message_boxes')
     message_id = models.AutoField(primary_key=True)
    # member_name = models.CharField(max_length=255)
     message = models.TextField()
@@ -33,4 +33,4 @@ class MessageBox(models.Model):
     updated_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='updated_messages')
 
     def __str__(self):
-        return f'Message {self.message_id} for Society {self.society_name.name}'
+        return f'Message {self.message_id} for Society_profile {self.society_name.name}'

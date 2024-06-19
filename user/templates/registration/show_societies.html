@@ -119,7 +119,15 @@
             <tr id="society-row-{{ society.id }}">
                 <td>{{ society.id }}</td>
                 <td class="clickable" onclick="redirectToDetails({{ society.id }})">{{ society.society_name }}</td>
-                <td>{{ society.type }}</td>
+                <td>
+                    <ul>
+                        {% for soc in society.type.all %}
+                            <li>{{ soc }}</li>
+                        {% endfor %}
+                    </ul>
+                   {% comment %} {% for Type in society.choices.all %}
+                        {{  }} {% endcomment %}
+                </td>
                 <td style="color: {% if society.is_active %}green{% else %}red{% endif %};">
                     {% if society.is_active %}Active{% else %}Inactive{% endif %}
                 </td>

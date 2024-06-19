@@ -18,7 +18,8 @@ from .models import Society, UserDetails, User
 from django.views.decorators.http import require_http_methods
 from django.shortcuts import get_object_or_404
 from .forms import UserEditForm
-
+from society.models import Society_profile
+from user.models import User
 
 
 
@@ -195,18 +196,7 @@ def otp_verify(request):
     return render(request, 'registration/otp_verify.html', {'form': form})
 
 
-# User = get_user_model()
 
-# @require_POST
-# def delete_user(request):
-#     user_id = request.POST.get('user_id')
-#     try:
-#         user = User.objects.get(pk=user_id)
-#         user.delete()
-#         return JsonResponse({'success': True})
-#     except User.DoesNotExist:
-#         return JsonResponse({'success': False, 'error': 'User not found'}, status=404)
-    
     
 def logout_view(request):
     if request.method == 'POST':
@@ -235,8 +225,27 @@ def add_society(request):
         form = SocietyForm(request.POST)
         if form.is_valid():
             print("Form is valid")
-            print(form.cleaned_data)  # Print cleaned data for debugging
-            form.save()
+            print(form.cleaned_data)
+            types = []
+            for type_obj in form.cleaned_data["type"]:
+                print(f"{type_obj=}")
+                types.append(type_obj)
+            print(f"{types=}")
+
+            society = Society.objects.create(
+                society_name=form.cleaned_data["society_name"]
+            )
+
+            for type_obj in types:
+                society.type.add(type_obj)
+
+            society.save()
+            society_profile = Society_profile.objects.create(
+                society_name = society
+            )
+            society_profile.save()
+            
+            # Print cleaned data for debugging
             return redirect('show_societies')
         else:
             print("Form is not valid")
@@ -246,18 +255,6 @@ def add_society(request):
     return render(request, 'registration/add_society.html', {'form': form})
 
 
-# def update_society(request, society_id):
-#     society = get_object_or_404(Society, id=society_id)
-
-#     if request.method == 'POST':
-#         form = SocietyForm(request.POST, request.FILES, instance=society)
-#         if form.is_valid():
-#             form.save()
-#             return redirect('registration/show_societies')
-#     else:
-#         form = SocietyForm(instance=society)
-
-#     return render(request, 'registration/update_society.html', {'form': form})
 
 
 def show_societies(request):
@@ -265,15 +262,6 @@ def show_societies(request):
     context = {'societies': societies}
     return render(request, 'registration/show_societies.html', context)  # Make sure this matches your actual template path
 
-# def show_society(request, society_id):
-#     society = Society.objects.get(pk=society_id)
-#     user_details = UserDetails.objects.get(user=request.user)
-#     context = {
-#         'society': society,
-#         'user_details': user_details,
-#         'society_id': society_id,
-#     }
-#     return render(request, 'registration/show_societies.html', context)
 
 def edit_society(request, id):
     society = get_object_or_404(Society, id=id)
@@ -289,7 +277,7 @@ def edit_society(request, id):
     return render(request, 'registration/edit_society.html', {'form': form, 'society': society})
 
 
-def add_subadmin(request):
+def society_id_add_subadmin(request):
     if request.method == 'POST':
         form = SubadminForm(request.POST)
 
@@ -300,12 +288,12 @@ def add_subadmin(request):
             flat_number = form.cleaned_data.get('flat_number')
             flat_type = form.cleaned_data.get('flat_type')
 
-            # Check if a user with the given phone number or email already exists
+            
             user_exist_by_phone = User.objects.filter(phone_number=phone).first()
             user_exist_by_email = User.objects.filter(email=email).first()
 
             if not user_exist_by_phone and not user_exist_by_email:
-                # Create a new user
+             
                 user = User.objects.create_user(
                     full_name=name,
                     phone_number=phone,
@@ -313,7 +301,7 @@ def add_subadmin(request):
                     is_admin=False
                 )
                 
-                # Create a new UserDetails instance and associate it with the user
+               
                 user_details = UserDetails.objects.create(
                     user=user,
                     role='committee_member',  # Assuming 'committee_member' is the role for subadmins
@@ -321,13 +309,7 @@ def add_subadmin(request):
                     flat_type=flat_type,
                 )
 
-                # No need to save form as the relevant data is saved through the creation above
-                # form.save()
-
-                # Optionally, you can log in the user here if needed
-                # login(request, user)
-
-                # Redirect to the subadmin list
+                
                 return redirect('subadmin_list')
             else:
                 if user_exist_by_phone:
@@ -335,13 +317,11 @@ def add_subadmin(request):
                 if user_exist_by_email:
                     form.add_error('email', "User with this email already exists.")
         else:
-            print(form.errors)  # Print form errors for debugging
-
+            print(form.errors) 
     else:
         form = SubadminForm()
 
     return render(request, 'registration/add_subadmin.html', {'form': form})
-
 
 def subadmin_list(request):
     subadmins = UserDetails.objects.all()
@@ -429,12 +409,7 @@ def delete_user(request, user_id):
     except User.DoesNotExist:
         return JsonResponse({'message': 'User not found'}, status=404)
     
-# def societies_list(request):
-#     societies = Society.objects.all()
-#     context = {
-#         'societies': societies
-#     }
-#     return render(request, 'registration/societies_list.html', context)
+
 
 def society_details(request, society_id):
     society = get_object_or_404(Society, pk=society_id)
@@ -453,4 +428,64 @@ def society_id_admin_dashboard(request,society_id):
     users = UserModel.objects.filter(society_name=society.society_name)
     # SubadminForm = UserDetails.objects.filter(role='Sub Admin',)
     return render(request, 'registration/admin_dashboard.html', {'users': users})
+
+
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_POST
+from django.contrib.auth import get_user_model, login
+from django.contrib.auth.models import User
+from django.contrib.auth import authenticate
+from django.contrib import messages
+from .forms import OTPForm
+from .utils import generate_otp
+from .models import UserDetails
+from rest_framework.decorators import api_view
+from rest_framework.response import Response
+from .serializers import UserLoginSerializer
+from .utils import generate_otp
+
+UserModel = get_user_model()
+
+@api_view(['POST'])
+def api_login(request):
+    serializer = UserLoginSerializer(data=request.data)
+    if serializer.is_valid():
+        phone_number = serializer.validated_data['phone_number']
+        otp = serializer.validated_data['otp']
+        
+        # Perform OTP verification logic (similar to previous implementation)
+        stored_otp = request.session.get('otp')
+
+        if stored_otp and stored_otp == otp:
+            try:
+                user = UserModel.objects.get(phone_number=phone_number)
+                user.backend = 'django.contrib.auth.backends.ModelBackend'
+                login(request, user)
+                return JsonResponse({'success': True, 'message': 'OTP verification successful.'})
+            except UserModel.DoesNotExist:
+                return JsonResponse({'success': False, 'message': 'User not found.'}, status=404)
+        else:
+            return JsonResponse({'success': False, 'message': 'Invalid OTP. Please try again.'}, status=400)
+    else:
+        return Response(serializer.errors, status=400)
+@csrf_exempt
+@require_POST
+def api_verify_otp(request):
+    phone_number = request.POST.get('phone_number')
+    otp = request.POST.get('otp')
+
+    stored_otp = request.session.get('otp')
+
+    if stored_otp and stored_otp == otp:
+        try:
+            user = UserModel.objects.get(phone_number=phone_number)
+            user.backend = 'django.contrib.auth.backends.ModelBackend'
+            login(request, user)
+            return JsonResponse({'success': True, 'message': 'OTP verification successful.'})
+        except UserModel.DoesNotExist:
+            return JsonResponse({'success': False, 'message': 'User not found.'}, status=404)
+    else:
+        return JsonResponse({'success': False, 'message': 'Invalid OTP. Please try again.'}, status=400)
+
 

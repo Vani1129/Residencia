@@ -1,9 +1,9 @@
 from django.db import models
 from django.conf import settings
-from society.models import Society
+from society.models import Society_profile
 
 class Amenity(models.Model):
-    society_id = models.ForeignKey(Society, on_delete=models.CASCADE, blank=True, null=True)
+    society_id = models.ForeignKey(Society_profile, on_delete=models.CASCADE, blank=True, null=True)
     id = models.AutoField(primary_key=True)
     images = models.ImageField(upload_to='media/amenities', blank=True, null=True)  
     title = models.CharField(max_length=255, null=True, blank=True)

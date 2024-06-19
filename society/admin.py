@@ -1,14 +1,14 @@
 from django.contrib import admin
-from .models import Society, Staff
+from .models import Society_profile, Staff
 
-@admin.register(Society)
+@admin.register(Society_profile)
 class SocietyAdmin(admin.ModelAdmin):
-    list_display = ('society_id', 'full_name', 'society_name', 'type', 'city', 'state', 'zip_code')
-    search_fields = ('full_name', 'society_name__society_name', 'city', 'state', 'zip_code')
+    list_display = ('society_id', 'society_name', 'city', 'state', 'zip_code')
+    search_fields = ( 'society_name__society_name', 'city', 'state', 'zip_code')
 
 @admin.register(Staff)
 class StaffAdmin(admin.ModelAdmin):
-    list_display = ('staff_id', 'society', 'designation', 'joined_date')
+    list_display = ('staff_id', 'society_name', 'designation', 'joined_date')
     search_fields = ('designation', 'society__society_name__society_name')
 
 # @admin.register(Registration)

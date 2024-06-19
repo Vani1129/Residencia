@@ -20,7 +20,7 @@ urlpatterns = [
     path('admin-dashboard/', views.admin_dashboard, name='admin_dashboard'),
     path('add_society/', views.add_society, name='add_society'),
     path('show_societies/', views.show_societies, name='show_societies'),
-    path('add_subadmin/', views.add_subadmin, name='add_subadmin'),   
+    path('add_subadmin/', views.society_id_add_subadmin, name='society_id_add_subadmin'),   
     path('subadmin_list/', views.subadmin_list, name='subadmin_list'),
     
 ]

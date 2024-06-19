@@ -48,8 +48,8 @@ INSTALLED_APPS = [
     'django_otp.plugins.otp_static',
     'django_otp.plugins.otp_totp',
     'amenities',
-    
     'bootstrap_datepicker_plus',
+    'multiselectfield',
 ]
 
 MIDDLEWARE = [

@@ -1,134 +1,145 @@
 from django.http import HttpResponse
-from django.shortcuts import render, redirect
-# from django.contrib.auth import login
-# from django.contrib import messages
-# from django.contrib.auth import get_user_model
-# from django.db import IntegrityError
-# from .forms import UserForm, OTPForm
-# from .utils import generate_otp
-# # import random
-# # import string
+from django.shortcuts import render, redirect, get_object_or_404
+from user.models import Society
+from .forms import SocietyProfileForm
+from .models import Society_profile
+from django.contrib import messages
+from django.contrib.auth.decorators import login_required
+from django.http import JsonResponse
+from django.views.decorators.http import require_http_methods
+from django.urls import reverse
 
 
 def home(request):
    return HttpResponse("Welcome to the Society Home Page")
 
-# def register(request):
+
+def create_society_profile(request, society_id):
+    society_profiles = get_object_or_404(Society, id=society_id)
+    society = Society.objects.get(id=society_id)
+    if request.method == 'POST':
+        form = SocietyProfileForm(request.POST)
+        if form.is_valid():
+            society_profile = form.save(commit=False)
+            society_profile.society_name = society
+            society_profile.created_by = request.user
+            society_profile.updated_by = request.user
+            society_profile.save()
+            return redirect(create_society_profile)  # Replace 'success_url' with the appropriate URL name
+    else:
+        form = SocietyProfileForm()
+    return render(request, 'society/create_society_profile.html', {'form': form})
+    
+@login_required
+def society_profile_list(request, society_id=None):
+    if request.user.is_superuser and society_id is not None:
+        society_profiles = Society_profile.objects.filter(society_name__id=society_id)
+    else:
+        user = request.user
+        print(f"{user.society_name=}")
+        society_profiles = Society_profile.objects.filter(society_name__society_name=user.society_name)
+        
+    context = {
+        'society_profiles': society_profiles
+    }
+    return render(request, 'society/society_profile.html', context)
+
+@login_required
+def add_society_profile(request):
+    if request.method == 'POST':
+        form = SocietyProfileForm(request.POST)
+        if form.is_valid():
+            society_profile = form.save(commit=False)
+            society_profile.created_by = request.user
+            society_profile.updated_by = request.user
+            society_profile.save()
+            messages.success(request, 'Society profile added successfully.')
+            return redirect('society_profile_list')
+    else:
+        form = SocietyProfileForm()
+    context = {
+        'form': form
+    }
+    return render(request, 'society/create_society_profile.html', context)
+
+@login_required
+def edit_society_profile(request, pk):
+    society_profile = get_object_or_404(Society_profile, pk=pk)
+    if request.method == 'POST':
+        form = SocietyProfileForm(request.POST, instance=society_profile)
+        if form.is_valid():
+            society_profile = form.save(commit=False)
+            society_profile.updated_by = request.user
+            society_profile.save()
+            messages.success(request, 'Society profile updated successfully.')
+            return redirect('society_profile_list')
+    else:
+        form = SocietyProfileForm(instance=society_profile)
+    context = {
+        'form': form
+    }
+    return render(request, 'edit_society_profile.html', context)
+
+@login_required
+# def delete_society_profile(request, pk):
+#     society_profile = get_object_or_404(Society_profile, pk=pk)
 #     if request.method == 'POST':
-#         form = UserForm(request.POST)
+#         society_profile.delete()
+#         messages.success(request, 'Society profile deleted successfully.')
+#         return redirect('society_profile_list')
+#     context = {
+#         'society_profile': society_profile
+#     }
+#     return render(request, 'delete_society_profile.html', context)
+
+@require_http_methods(["DELETE"])
+def delete_society_profile(request, society_profile_id):
+    try:
+        society_profile = Society_profile.objects.get(pk=society_profile_id)
+        society_profile.delete()
+        return JsonResponse({'message': 'Society profile deleted successfully.'}, status=200)
+    except Society_profile.DoesNotExist:
+        return JsonResponse({'error': 'Society profile not found.'}, status=404)
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+    
+# def edit_society_profile(request, society_profile_id):
+#     society_profile = get_object_or_404(Society_profile, pk=society_profile_id)
+    
+#     if request.method == 'POST':
+#         form = SocietyProfileForm(request.POST, instance=society_profile)
 #         if form.is_valid():
-#             full_name = form.cleaned_data.get('full_name')
-#             phone_number = form.cleaned_data.get('phone_number')
-#             email = form.cleaned_data.get('email')
-#             password = form.cleaned_data.get('password')
-#             address = form.cleaned_data.get('address')
-#             society_name = form.cleaned_data.get('society_name')
-#             type = form.cleaned_data.get('type')
-#             UserModel = get_user_model()
-#             if UserModel.objects.filter(email=email).exists():
-#                 messages.error(request, 'Email already exists. Please use a different email address.')
-#             elif UserModel.objects.filter(phone_number=phone_number).exists():
-#                 messages.error(request, 'Phone number already exists. Please use a different phone number.')
-#             else:
-#                 try:
-#                     user = UserModel.objects.create_user(
-#                         full_name=full_name,
-#                         phone_number=phone_number,
-#                         email=email,
-#                         password=password,
-#                         address=address,
-#                         society_name=society_name,
-#                         type=type,
-#                     )
-#                     messages.success(request, 'Registration successful. You can now login.')
-#                     return redirect('login')
-#                 except IntegrityError as e:
-#                     print(str(e))  # Print the error message
-#                     error_message = str(e)
-#                     messages.error(request, f'An error occurred: {error_message}')
-#         else:
-#             messages.error(request, 'Invalid form data. Please check the provided information.')
+#             form.save()
+#             return redirect(reverse('society_profile_list'))  # Redirect to the list page after saving
 #     else:
-#         form = UserForm()
-#     return render(request, 'registration/register.html', {'form': form})
+#         form = SocietyProfileForm(instance=society_profile)
+    
+#     return render(request, 'society/edit_society_profile.html', {'form': form})
 
-
-
-
-# def login_view(request):
-#     if request.method == 'POST':
-#         form = OTPForm(request.POST)
-#         if form.is_valid():
-#             identifier = form.cleaned_data.get('identifier')
-#             otp = form.cleaned_data.get('otp')
-            
-#             stored_otp = request.session.get('otp')
-#             if stored_otp and stored_otp == otp:
-#                 UserModel = get_user_model()
-#                 try:
-#                     user = UserModel.objects.get(email=identifier)
-#                 except UserModel.DoesNotExist:
-#                     try:
-#                         user = UserModel.objects.get(phone_number=identifier)
-#                     except UserModel.DoesNotExist:
-#                         user = None
-
-#                 if user:
-#                     user.backend = 'django.contrib.auth.backends.ModelBackend'
-#                     login(request, user)
-#                     messages.success(request, 'OTP verification successful.')
-#                     return redirect('home')
-#                 else:
-#                     messages.error(request, 'User not found.')
-#             else:
-#                 messages.error(request, 'Invalid OTP. Please try again.')
-#         else:
-#             messages.error(request, 'Invalid form data. Please check the provided information.')
-#     else:
-#         form = OTPForm()
-
-#     return render(request, 'registration/login.html', {'form': form})
-
-# def admin_dashboard(request):
-#     return render(request, 'dashboard.html')
-
-# def send_otp_view(request):
-#     if request.method == 'POST':
-#         identifier = request.POST.get('identifier')
-#         UserModel = get_user_model()
-#         try:
-#             user = UserModel.objects.get(email=identifier)
-#         except UserModel.DoesNotExist:
-#             try:
-#                 user = UserModel.objects.get(phone_number=identifier)
-#             except UserModel.DoesNotExist:
-#                 user = None
-
-#         if user:
-#             otp = generate_otp()
-#             request.session['otp'] = otp
-#             # Here, you should send the OTP via email/SMS. For example, you can use Django's send_mail function or an SMS API.
-#             print(f"Generated OTP: {otp}")  # Debugging line, should be removed in production
-#             messages.success(request, 'OTP sent successfully')
-#             return redirect('otp_verify')
-#         else:
-#             messages.error(request, 'User not found.')
-#     return render(request, 'registration/send_otp.html')
-
-# def otp_verify(request):
-#     if request.method == 'POST':
-#         form = OTPForm(request.POST)
-#         if form.is_valid():
-#             otp = form.cleaned_data.get('otp')
-#             stored_otp = request.session.get('otp')
-#             if stored_otp and stored_otp == otp:
-#                 messages.success(request, 'OTP verification successful.')
-#                 return redirect('registration/login')
-#             else:
-#                 messages.error(request, 'Invalid OTP. Please try again.')
-#         else:
-#             messages.error(request, 'Invalid form data. Please check the provided information.')
-#     else:
-#         form = OTPForm()
-#     return render(request, 'registration/otp_verify.html', {'form': form})
-
+def edit_society_profile(request, society_profile_id):
+    society_profile = get_object_or_404(Society_profile, pk=society_profile_id)
+    
+    if request.method == 'POST':
+        print("POST data:", request.POST)  # Log POST data for debugging
+        form = SocietyProfileForm(request.POST, instance=society_profile)
+        if form.is_valid():
+            try:
+                form.save()
+                messages.success(request, "Profile updated successfully.")
+                return redirect('society_profile_list')
+            except Exception as e:
+                print("An error occurred while saving the form.")
+                print(e)
+                messages.error(request, "An error occurred while updating the profile.")
+        else:
+            print("Form is not valid.")
+            print("Form errors:", form.errors)
+            for field, errors in form.errors.items():
+                for error in errors:
+                    print(f"Error in {field}: {error}")
+                    
+            messages.error(request, "There were errors in the form. Please correct them and try again.")
+    else:
+        form = SocietyProfileForm(instance=society_profile)
+    
+    return render(request, 'society/edit_society_profile.html', {'form': form})

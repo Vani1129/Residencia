@@ -3,7 +3,7 @@ from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.utils.html import format_html
 from django.contrib.auth import get_user_model
 
-from .models import UserDetails, Member, Society
+from .models import UserDetails, Member, Society, Type
 
 User = get_user_model()
 
@@ -21,7 +21,7 @@ class MemberAdmin(admin.ModelAdmin):
 
 @admin.register(Society)
 class SocietyAdmin(admin.ModelAdmin):
-    list_display = ('id', 'society_name', 'type', 'is_active')
+    list_display = ('id', 'society_name','is_active')
     list_filter = ('is_active',)
     search_fields = ('society_name',)
     actions = ['make_active', 'make_inactive']
@@ -55,3 +55,6 @@ class CustomUserAdmin(BaseUserAdmin):
         return 'No Image'
 
     image_preview.short_description = 'Image'
+
+
+admin.site.register(Type)

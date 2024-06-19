@@ -1,10 +1,9 @@
 # forms.py
 from django import forms
-from .models import UserDetails, Member, User, Society
+from .models import UserDetails, Member, User, Society, Type
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Layout, Row, Column, Submit, HTML
 from django.urls import reverse_lazy
-
 
 class UserDetailsForm(forms.ModelForm):
     number_of_members = forms.IntegerField(min_value=1, label="Number of Members", required=True, initial=1)
@@ -103,14 +102,13 @@ from django.urls import reverse_lazy
 
 
 class SocietyForm(forms.ModelForm):
-    TYPES_CHOICES = [
-        ('Flat', 'Flat'),
-        ('Banglow', 'Banglow'),
-        ('Rowhouse', 'Rowhouse'),
-    ]
+    
 
     society_name = forms.CharField(widget=forms.TextInput(attrs={'class': 'form-control'}))
-    type = forms.MultipleChoiceField(choices=TYPES_CHOICES, widget=forms.SelectMultiple(attrs={'class': 'form-control'}), required=False)
+    type = forms.ModelMultipleChoiceField(
+        queryset=Type.objects.all(),
+        widget= forms.CheckboxSelectMultiple
+    )
     is_active = forms.BooleanField(label='Active', required=False)
 
     class Meta:
@@ -148,7 +146,7 @@ class SubadminForm(forms.ModelForm):
     name = forms.CharField(max_length=100)
     phone_no = forms.CharField(max_length=15)
     email = forms.EmailField(required=False)
-
+    user = forms.ModelChoiceField(queryset=User.objects.all())
     class Meta:
         model = UserDetails
         fields = ['name', 'role', 'email', 'phone_no', 'flat_number', 'flat_type']

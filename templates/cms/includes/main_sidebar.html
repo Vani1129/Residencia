@@ -53,6 +53,20 @@
                     <div id="society-menu-items" style="display: block;">
                         <!-- Render sidebar menu items for the selected society -->
                         <ul class="sidebar-menu">
+                        
+                            <li class="treeview">
+                                <a href="#">
+                                    <i data-feather="user-plus" style="color: black;"></i>
+                                    <span style="color: black;">Society Profile</span>
+                                    <span class="pull-right-container">
+                                        <i class="fa fa-angle-right pull-right"></i>
+                                    </span>
+                                </a>
+                                <ul class="treeview-menu">
+                                    <li><a href="{% url 'society_id_society_profile_list' request.resolver_match.kwargs.society_id %}"><i class="icon-Commit"></i>View Profile</a></li>
+                                    
+                                </ul>
+                            </li>
                         <li class="treeview">
                             <a href="#">
                                 <i data-feather="user-plus" style="color: black;"></i>
@@ -66,6 +80,7 @@
                                 <li><a href="{% url 'subadmin_list' %}"><i class="icon-Commit"></i>Gate Keeper</a></li>
                             </ul>
                         </li>
+                       
                         <li class="treeview">
                             <a href="#">
                                 <i data-feather="shield" style="color: black;"></i>
@@ -149,6 +164,19 @@
 
                     {% if user.is_admin and not user.is_superuser %}
                         <!-- Admin Menu -->
+                        <li class="treeview">
+                            <a href="#">
+                                <i data-feather="user-plus" style="color: black;"></i>
+                                <span style="color: black;">Society Profile</span>
+                                <span class="pull-right-container">
+                                    <i class="fa fa-angle-right pull-right"></i>
+                                </span>
+                            </a>
+                            <ul class="treeview-menu">
+                                <li><a href="{% url 'society_profile_list'  %}"><i class="icon-Commit"></i>View Profile</a></li>
+                                
+                            </ul>
+                        </li>
                         <li class="treeview">
                             <a href="#">
                                 <i data-feather="user-plus" style="color: black;"></i>
