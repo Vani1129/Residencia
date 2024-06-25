@@ -2,6 +2,8 @@ from django import forms
 from user.models import User
 from .models import Society_profile
 
+from django import forms
+from .models import Society_profile
 
 class SocietyProfileForm(forms.ModelForm):
     society_name_display = forms.CharField(label='Society Name', required=False, widget=forms.TextInput(attrs={'class': 'form-control', 'readonly': 'readonly'}))
@@ -9,7 +11,6 @@ class SocietyProfileForm(forms.ModelForm):
     class Meta:
         model = Society_profile
         fields = [
-            
             'type',
             'total_numbers',
             'address',
@@ -21,7 +22,6 @@ class SocietyProfileForm(forms.ModelForm):
             'zip_code',
         ]
         widgets = {
-            # 'society_name': forms.TextInput(attrs={'class': 'form-control', 'readonly': 'readonly'}),
             'type': forms.SelectMultiple(attrs={'class': 'form-control', 'readonly': 'readonly', 'disabled': 'disabled'}),
             'total_numbers': forms.NumberInput(attrs={'class': 'form-control'}),
             'address': forms.TextInput(attrs={'class': 'form-control'}),
@@ -35,10 +35,14 @@ class SocietyProfileForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super(SocietyProfileForm, self).__init__(*args, **kwargs)
-        # self.fields['society_name'].disabled = True 
+        instance = kwargs.get('instance')
+        if instance and instance.society_name:
+            self.fields['society_name_display'].initial = self.instance.society_name.society_name
+        else:
+            self.fields['society_name_display'].widget.attrs['readonly'] = False 
        
-        self.fields['society_name_display'].initial = self.instance.society_name.society_name
-        self.fields['type'].disabled = True  # Ensure the type field is disabled
+        # self.fields['society_name_display'].initial = self.instance.society_name.society_name
+        # self.fields['type'].disabled = True  # Ensure the type field is disabled
 
     # def __init__(self, *args, **kwargs):
     #     super(SocietyProfileForm, self).__init__(*args, **kwargs)

@@ -25,7 +25,7 @@ SECRET_KEY = 'django-insecure-crf+mmp)rbm#w+9%_+ufadc^@-cc=(b2%=-b2lo^yi^19^w6l8
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 
 # Application definition
 
@@ -50,6 +50,8 @@ INSTALLED_APPS = [
     'amenities',
     'bootstrap_datepicker_plus',
     'multiselectfield',
+    'drf_yasg',
+    'rest_framework',
 ]
 
 MIDDLEWARE = [

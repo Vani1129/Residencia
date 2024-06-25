@@ -1,25 +1,40 @@
-import json
-from django.http import JsonResponse
-from django.shortcuts import render, redirect, get_object_or_404
-from django.http import HttpResponse
-from django.contrib.auth import authenticate,login
-from django.contrib import messages
-from django.contrib.auth import get_user_model
-from django.db import IntegrityError
-from .forms import UserForm, OTPForm, MemberForm, SocietyForm, SubadminForm
-from .utils import generate_otp
+# import json
+# from django.http import JsonResponse
+# from django.shortcuts import render, redirect, get_object_or_404
+# from django.http import HttpResponse
+# from django.contrib.auth import authenticate,login
+# from django.contrib import messages
+# from django.contrib.auth import get_user_model
+# from django.db import IntegrityError
+# from .forms import UserForm, OTPForm, MemberForm, SocietyForm, SubadminForm
+# from .utils import generate_otp
+# from django.contrib.auth.decorators import user_passes_test
+# from django.contrib.auth import get_user_model
+# from django.contrib.auth import logout as auth_logout
+# from .models import Society, UserDetails, User
+# from django.views.decorators.http import require_http_methods
+# from django.shortcuts import get_object_or_404
+# from .forms import UserEditForm
+# from society.models import Society_profile
+# from user.models import User
+
+from django.contrib.auth import authenticate, login
 from django.contrib.auth.decorators import user_passes_test
-# from django.contrib.auth.models import User
+from django.contrib.auth.models import User
+from django.http import JsonResponse
+from django.shortcuts import get_object_or_404, redirect, render
+from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_http_methods, require_POST
+from django.contrib import messages
+from rest_framework.decorators import api_view
+from rest_framework.response import Response
+from drf_yasg.utils import swagger_auto_schema
+from drf_yasg import openapi
+from .forms import UserForm, OTPForm, MemberForm, SocietyForm, SubadminForm, UserEditForm
+from .utils import generate_otp
+from .models import Society, UserDetails
+from .serializers import UserLoginSerializer
 from django.contrib.auth import get_user_model
-# from django.views.decorators.http import require_POST
-# from django.views.decorators.csrf import csrf_exempt
-from django.contrib.auth import logout as auth_logout
-from .models import Society, UserDetails, User
-from django.views.decorators.http import require_http_methods
-from django.shortcuts import get_object_or_404
-from .forms import UserEditForm
-from society.models import Society_profile
-from user.models import User
 
 
 
@@ -140,6 +155,8 @@ def society_id_subadmin_list(request,society_id):
 
 
 
+
+
 def send_otp_view(request):
     if request.method == 'POST':
         is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
@@ -153,9 +170,10 @@ def send_otp_view(request):
                 user = None
 
             if user is not None:
-                otp = generate_otp()
+                # Set a static OTP for testing purposes
+                otp = '999000'
+
                 request.session['otp'] = otp
-                # Here, you should send the OTP via email/SMS. For example, you can use Django's send_mail function or an SMS API.
                 print(f"Generated OTP: {otp}")  # Debugging line, should be removed in production
 
                 if is_ajax:
@@ -176,7 +194,7 @@ def send_otp_view(request):
                 messages.error(request, 'Invalid identifier format. Please enter a valid phone number.')
                 return render(request, 'registration/login.html')
     else:
-        return JsonResponse({'success': False, 'message': 'Invalid request method.'}) 
+        return JsonResponse({'success': False, 'message': 'Invalid request method.'})
 
 def otp_verify(request):
     if request.method == 'POST':
@@ -430,54 +448,43 @@ def society_id_admin_dashboard(request,society_id):
     return render(request, 'registration/admin_dashboard.html', {'users': users})
 
 
-from django.http import JsonResponse
-from django.views.decorators.csrf import csrf_exempt
-from django.views.decorators.http import require_POST
-from django.contrib.auth import get_user_model, login
-from django.contrib.auth.models import User
-from django.contrib.auth import authenticate
-from django.contrib import messages
-from .forms import OTPForm
-from .utils import generate_otp
-from .models import UserDetails
-from rest_framework.decorators import api_view
-from rest_framework.response import Response
-from .serializers import UserLoginSerializer
-from .utils import generate_otp
+
+# api 
 
 UserModel = get_user_model()
 
+@swagger_auto_schema(method='post', request_body=UserLoginSerializer, responses={200: 'OTP sent successfully.', 400: 'Invalid identifier format.'})
 @api_view(['POST'])
-def api_login(request):
-    serializer = UserLoginSerializer(data=request.data)
-    if serializer.is_valid():
-        phone_number = serializer.validated_data['phone_number']
-        otp = serializer.validated_data['otp']
-        
-        # Perform OTP verification logic (similar to previous implementation)
-        stored_otp = request.session.get('otp')
-
-        if stored_otp and stored_otp == otp:
-            try:
-                user = UserModel.objects.get(phone_number=phone_number)
-                user.backend = 'django.contrib.auth.backends.ModelBackend'
-                login(request, user)
-                return JsonResponse({'success': True, 'message': 'OTP verification successful.'})
-            except UserModel.DoesNotExist:
-                return JsonResponse({'success': False, 'message': 'User not found.'}, status=404)
-        else:
-            return JsonResponse({'success': False, 'message': 'Invalid OTP. Please try again.'}, status=400)
-    else:
-        return Response(serializer.errors, status=400)
 @csrf_exempt
-@require_POST
+def api_send_otp(request):
+    """
+    Send OTP to the user's phone number.
+    """
+    identifier = request.data.get('phone_number')
+    if len(identifier) == 10 and identifier.isdigit():
+        try:
+            user = UserModel.objects.get(phone_number=identifier)
+            otp = '999000'
+            request.session['otp'] = otp
+            print(f"Generated OTP: {otp}")  # Debugging line, should be removed in production
+            return JsonResponse({'success': True, 'message': 'OTP sent successfully.'})
+        except UserModel.DoesNotExist:
+            return JsonResponse({'success': False, 'message': 'This phone number is not registered.'}, status=404)
+    else:
+        return JsonResponse({'success': False, 'message': 'Invalid identifier format.'}, status=400)
+
+@swagger_auto_schema(method='post', request_body=UserLoginSerializer, responses={200: 'OTP verification successful.', 400: 'Invalid OTP. Please try again.', 404: 'User not found.'})
+@api_view(['POST'])
+@csrf_exempt
 def api_verify_otp(request):
-    phone_number = request.POST.get('phone_number')
-    otp = request.POST.get('otp')
-
+    """
+    Verify the OTP sent to the user's phone number and log in the user.
+    """
+    phone_number = request.data.get('phone_number')
+    otp = request.data.get('otp')
     stored_otp = request.session.get('otp')
-
-    if stored_otp and stored_otp == otp:
+    # if stored_otp and stored_otp == otp:
+    if stored_otp == otp:
         try:
             user = UserModel.objects.get(phone_number=phone_number)
             user.backend = 'django.contrib.auth.backends.ModelBackend'
@@ -487,5 +494,3 @@ def api_verify_otp(request):
             return JsonResponse({'success': False, 'message': 'User not found.'}, status=404)
     else:
         return JsonResponse({'success': False, 'message': 'Invalid OTP. Please try again.'}, status=400)
-
-
