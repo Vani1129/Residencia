@@ -39,7 +39,11 @@
                                 <td>{{ amenity.description }}</td>
                                 <td>{{ amenity.rule_description }}</td>
                                 <td>
-                                    <img src="{{ amenity.images}}">
+                                    {% if amenity.image %}
+                                        <img src="{{ amenity.image.url }}" alt="{{ amenity.name }}" style="width: 100px; height: auto;">
+                                    {% else %}
+                                        No image
+                                    {% endif %}
                                 </td>
         
                                 <td>

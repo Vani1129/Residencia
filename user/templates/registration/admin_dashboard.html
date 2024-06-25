@@ -67,8 +67,9 @@ tr:hover {
     </style>
 </head>
 <body>
-    <h1>Super Admin Dashboard</h1>
-    <button class="add-button" onclick="window.location.href='{% url 'register' %}'">
+    
+    <h1>Admin Dashboard</h1>
+    <button class="add-button" onclick="window.location.href='{% url 'register' request.resolver_match.kwargs.society_id%}'">
         <i class="fas fa-plus button-icon"></i> Add Registration
     </button>
     <br><br>

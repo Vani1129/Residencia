@@ -21,38 +21,119 @@
 from django.contrib.auth import authenticate, login
 from django.contrib.auth.decorators import user_passes_test
 from django.contrib.auth.models import User
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods, require_POST
 from django.contrib import messages
-from rest_framework.decorators import api_view
+from django.db import IntegrityError
+from django.contrib.auth import get_user_model
 from rest_framework.response import Response
+from rest_framework.decorators import api_view, permission_classes
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
-from .forms import UserForm, OTPForm, MemberForm, SocietyForm, SubadminForm, UserEditForm
+from rest_framework.permissions import IsAuthenticated
+from rest_framework import status
+from .forms import UserForm, OTPForm, MemberForm, SocietyForm, SubadminForm, UserEditForm,FamilyMemberForm
 from .utils import generate_otp
-from .models import Society, UserDetails
-from .serializers import UserLoginSerializer
+from .models import Society, UserDetails, Member, FamilyMember
+from .serializers import UserLoginSerializer,UserSerializer, FamilyMemberSerializer
 from django.contrib.auth import get_user_model
+from society.models import Society_profile
+from django.contrib.auth.decorators import login_required
+from .forms import OTPForm
 
 
 
-def add_member(request):
+
+
+from django.shortcuts import render, redirect
+from .forms import MemberForm, FamilyMemberForm
+from society.models import  Building
+
+
+def resident_list(request, building_id):
+    building = get_object_or_404(Building, id=building_id)
+    members = Member.objects.filter(building=building)
+
+    context = {
+        'building': building,
+        'members': members,
+    }
+    return render(request, 'users/resident_list.html', context)
+
+
+def add_resident(request, society_id, building_id):
+    society = get_object_or_404(Society, id=society_id)
+    building = get_object_or_404(Building, id=building_id)
+
     if request.method == 'POST':
-        form = MemberForm(request.POST)
-        if form.is_valid():
-            form.save()
-            messages.success(request, 'Member added successfully.')
-            return redirect('home')
+        form = MemberForm(request.POST, request.FILES)
+        family_form = FamilyMemberForm(request.POST)
+        if form.is_valid() and family_form.is_valid():
+            name = form.cleaned_data.get('name')
+            phone = form.cleaned_data.get('phone_number')
+            email = form.cleaned_data.get('email')
+            flat_number = form.cleaned_data.get('flat_number')
+            flat_type = form.cleaned_data.get('flat_type')
+            date_of_birth = form.cleaned_data.get('date_of_birth')
+            gender = form.cleaned_data.get('gender')
+            country = form.cleaned_data.get('country')
+            member_type = form.cleaned_data.get('member_type')
+
+            user_exist_by_phone = User.objects.filter(phone_number=phone).first()
+            user_exist_by_email = User.objects.filter(email=email).first()
+
+            if not user_exist_by_phone and not user_exist_by_email:
+                user = User.objects.create(
+                    full_name=name,
+                    phone_number=phone,
+                    email=email,
+                    is_admin=False
+                )
+                member = Member.objects.create(
+                    society=society,
+                    user=user,
+                    building=building,
+                    flat_number=flat_number,
+                    date_of_birth=date_of_birth,
+                    gender=gender,
+                    country=country,
+                    member_type=member_type
+                )
+
+                number_of_members = form.cleaned_data.get('number_of_members', 1)
+                if number_of_members is not None:
+                    for _ in range(number_of_members):
+                        family_instance = family_form.save(commit=False)
+                        family_instance.member = member
+                        family_instance.save()
+
+                return redirect('floor_data', building_id=building.id)
+            else:
+                if user_exist_by_phone:
+                    form.add_error('phone_number', "User with this phone number already exists.")
+                if user_exist_by_email:
+                    form.add_error('email', "User with this email already exists.")
     else:
-        form = MemberForm()
-    return render(request, 'add_member.html', {'form': form})
+        form = MemberForm(initial={'society_name_display': society.society_name})
+        family_form = FamilyMemberForm()
+
+    context = {
+        'form': form,
+        'family_form': family_form,
+    }
+    return render(request, 'building/add_resident.html', context)
+
+
 
 def home(request):
     return HttpResponse("Welcome to the Society Home Page")
 
-def register(request):
+def register(request, society_id):
+    society = get_object_or_404(Society, id=society_id)
+    
     if request.method == 'POST':
         form = UserForm(request.POST, request.FILES)
         if form.is_valid():
@@ -61,9 +142,6 @@ def register(request):
             image = form.cleaned_data.get('image')
             email = form.cleaned_data.get('email')
             password = form.cleaned_data.get('password')
-            address = form.cleaned_data.get('address')
-            society = form.cleaned_data.get('society_name')  # Update to use the Society instance
-            # role = form.cleaned_data.get('role')  # Assuming role is a field in your form
             UserModel = get_user_model()
 
             if UserModel.objects.filter(email=email).exists():
@@ -77,25 +155,21 @@ def register(request):
                         phone_number=phone_number,
                         email=email,
                         password=password,
-                        address=address,
-                        society_name=society,
-                        is_admin=True,# Use the Society instance
-                        # role=role,  # Save the role to the user
+                        society_name=society,  # Use the Society instance
+                        is_admin=True,
                         image=image,
                     )
-                    society_details = Society.objects.get(society_name=society)
                     messages.success(request, 'Registration successful. You can now login.')
-                    return redirect('society_id_admin_dashboard', society_id=society_details.id)
+                    return redirect('society_id_admin_dashboard', society_id=society.id)
                 except IntegrityError as e:
                     messages.error(request, f'An error occurred: {str(e)}')
         else:
             messages.error(request, 'Invalid form data. Please check the provided information.')
     else:
-        form = UserForm()
-    
-    return render(request, 'registration/register.html', {'form': form})
+        society_types = society.type.values_list('name', flat=True)
+        form = UserForm(initial={'society_name_display': society.society_name, 'society_type_display': ", ".join(society_types)})
 
-
+    return render(request, 'registration/register.html', {'form': form, 'society': society})
 
 def login_view(request):
     if request.method == 'POST':
@@ -149,73 +223,102 @@ def admin_dashboard(request,society_id):
     # SubadminForm = UserDetails.objects.filter(role='Sub Admin',)
     return render(request, 'registration/admin_dashboard.html', {'users': users})
 
-def society_id_subadmin_list(request,society_id):
-    subadmins = UserDetails.objects.filter(society_sub=society_id)
-    return render(request, 'registration/subadmin_list.html', {'subadmins': subadmins})
+def society_id_subadmin_list(request, society_id):
+    subadmins = UserDetails.objects.filter(society_sub=society_id, role='committee_member')
+    return render(request, 'registration/subadmin_list.html', {'subadmins': subadmins, 'society_id': society_id})
 
 
 
-
+from django.shortcuts import render, redirect
+from django.contrib import messages
+from django.http import JsonResponse
+from django.urls import reverse
+from django.contrib.auth import login, get_user_model
+from .forms import OTPForm
 
 def send_otp_view(request):
     if request.method == 'POST':
         is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
-        identifier = request.POST.get('identifier')
+        identifier = request.POST.get('phone_number')
         UserModel = get_user_model()
 
-        if len(identifier) == 10 and identifier.isdigit():
+        if identifier and len(identifier) == 10 and identifier.isdigit():
             try:
                 user = UserModel.objects.get(phone_number=identifier)
             except UserModel.DoesNotExist:
                 user = None
 
             if user is not None:
-                # Set a static OTP for testing purposes
-                otp = '999000'
-
+                otp = '999000'  # Replace with actual OTP generation logic
                 request.session['otp'] = otp
-                print(f"Generated OTP: {otp}")  # Debugging line, should be removed in production
+                request.session['phone_number'] = identifier
+                # Debugging statements
+                print(f"Stored OTP: {otp}")
+                print(f"Stored Phone Number: {identifier}")
+                print(f"Session Data: {request.session.items()}")
 
                 if is_ajax:
                     return JsonResponse({'success': True, 'message': 'OTP sent successfully.'})
                 else:
                     messages.success(request, 'OTP sent successfully.')
-                    return redirect('otp_verify')
+                    return redirect(reverse('otp_verify') + f"?phone_number={user.phone_number}")
             else:
+                error_message = 'This phone number is not registered. Please check your number.'
                 if is_ajax:
-                    return JsonResponse({'success': False, 'message': 'This phone number is not registered. Please check your number.'})
+                    return JsonResponse({'success': False, 'message': error_message})
                 else:
-                    messages.error(request, 'This phone number is not registered. Please check your number.')
+                    messages.error(request, error_message)
                     return render(request, 'registration/login.html')
         else:
+            error_message = 'Invalid phone number format. Please enter a valid 10-digit phone number.'
             if is_ajax:
-                return JsonResponse({'success': False, 'message': 'Invalid identifier format. Please enter a valid phone number.'})
+                return JsonResponse({'success': False, 'message': error_message})
             else:
-                messages.error(request, 'Invalid identifier format. Please enter a valid phone number.')
+                messages.error(request, error_message)
                 return render(request, 'registration/login.html')
     else:
         return JsonResponse({'success': False, 'message': 'Invalid request method.'})
+    
+def otp_page(request):
+    return render(request, 'registration/otp_verify.html')
+
+
 
 def otp_verify(request):
     if request.method == 'POST':
         form = OTPForm(request.POST)
+        print(f"{form.errors=}")
         if form.is_valid():
-            otp = form.cleaned_data.get('otp')
+            otp_entered = form.cleaned_data['otp']
+            phone_number = form.cleaned_data['phone_number']
             stored_otp = request.session.get('otp')
-            if stored_otp and stored_otp == otp:
-                messages.success(request, 'OTP verification successful.')
-                return redirect("login")
+
+              # Debugging prints
+            print(f"Stored OTP: {stored_otp}")
+            print(f"Stored Phone Number: {phone_number}")
+
+            if otp_entered == stored_otp and phone_number:
+                UserModel = get_user_model()
+                try:
+                    user = UserModel.objects.get(phone_number=phone_number)
+                    login(request, user)
+                    messages.success(request, 'OTP verified. You are now logged in.')
+                    return redirect('/home/')
+                except UserModel.DoesNotExist:
+                    messages.error(request, 'User not found. Please try again.')
             else:
                 messages.error(request, 'Invalid OTP. Please try again.')
         else:
-            messages.error(request, 'Invalid form data. Please check the provided information.')
+            print(form.errors)
+            messages.error(request, 'Invalid form submission. Please try again.')
     else:
-        form = OTPForm()
+        form = OTPForm(initial={'phone_number': request.session.get('phone_number')})
+
+
     return render(request, 'registration/otp_verify.html', {'form': form})
 
 
 
-    
 def logout_view(request):
     if request.method == 'POST':
         phone_number = request.POST['phone_number']
@@ -244,26 +347,23 @@ def add_society(request):
         if form.is_valid():
             print("Form is valid")
             print(form.cleaned_data)
-            types = []
-            for type_obj in form.cleaned_data["type"]:
-                print(f"{type_obj=}")
-                types.append(type_obj)
-            print(f"{types=}")
-
+            types = form.cleaned_data["type"]
+            print(f"{form.cleaned_data.get("is_active")=}")
             society = Society.objects.create(
-                society_name=form.cleaned_data["society_name"]
+                society_name=form.cleaned_data["society_name"],
+                is_active=form.cleaned_data.get("is_active")  # Use get() with a default value
             )
-
+            
             for type_obj in types:
                 society.type.add(type_obj)
-
+            
             society.save()
             society_profile = Society_profile.objects.create(
-                society_name = society
+                society_name=society
             )
             society_profile.save()
+            print(f"{society_profile=}")
             
-            # Print cleaned data for debugging
             return redirect('show_societies')
         else:
             print("Form is not valid")
@@ -271,8 +371,6 @@ def add_society(request):
     else:
         form = SocietyForm()
     return render(request, 'registration/add_society.html', {'form': form})
-
-
 
 
 def show_societies(request):
@@ -295,7 +393,64 @@ def edit_society(request, id):
     return render(request, 'registration/edit_society.html', {'form': form, 'society': society})
 
 
-def society_id_add_subadmin(request):
+
+User = get_user_model()
+
+def subadmin_list(request):
+    subadmins = UserDetails.objects.filter(society_sub__id=request.user.userdetails.society_sub.id)
+    return render(request, 'subadmin_list.html', {'subadmins': subadmins})
+
+def society_id_subadmin_list(request, society_id=None):
+   
+    subadmins = UserDetails.objects.filter(society_sub__id=society_id)
+    return render(request, 'subadmin_list.html', {'subadmins': subadmins, 'society_id': society_id})
+
+
+
+def society_id_add_subadmin(request, society_id):
+    if request.method == 'POST':
+        form = SubadminForm(request.POST)
+
+        if form.is_valid():
+            name = form.cleaned_data.get('name')
+            phone = form.cleaned_data.get('phone_no')
+            email = form.cleaned_data.get('email')
+            flat_number = form.cleaned_data.get('flat_number')
+            # flat_type = form.cleaned_data.get('flat_type')
+
+            user_exist_by_phone = User.objects.filter(phone_number=phone).first()
+            user_exist_by_email = User.objects.filter(email=email).first()
+
+            if not user_exist_by_phone and not user_exist_by_email:
+                user = User.objects.create_user(
+                    full_name=name,
+                    phone_number=phone,
+                    email=email,
+                    is_admin=False
+                )
+                society = Society.objects.filter(id=society_id).first()
+                user_details = UserDetails.objects.create(
+                    user=user,
+                    role='committee_member',  # Assuming 'committee_member' is the role for subadmins
+                    flat_number=flat_number,
+                    # flat_type=flat_type,
+                    society_sub=society,
+                )
+                return redirect('society_id_subadmin_list', society_id=society_id)
+            else:
+                if user_exist_by_phone:
+                    form.add_error('phone_no', "User with this phone number already exists.")
+                if user_exist_by_email:
+                    form.add_error('email', "User with this email already exists.")
+        else:
+            print(form.errors)
+    else:
+        form = SubadminForm()
+
+    return render(request, 'registration/add_subadmin.html', {'form': form, 'society_id': society_id})
+
+def add_subadmin(request):
+    print(f"{SubadminForm=}")
     if request.method == 'POST':
         form = SubadminForm(request.POST)
 
@@ -306,43 +461,52 @@ def society_id_add_subadmin(request):
             flat_number = form.cleaned_data.get('flat_number')
             flat_type = form.cleaned_data.get('flat_type')
 
-            
             user_exist_by_phone = User.objects.filter(phone_number=phone).first()
             user_exist_by_email = User.objects.filter(email=email).first()
 
             if not user_exist_by_phone and not user_exist_by_email:
-             
                 user = User.objects.create_user(
                     full_name=name,
                     phone_number=phone,
                     email=email,
                     is_admin=False
                 )
+                print(f"{request.user.userdetails=}")
+                userdetail = UserDetails.objects.filter(user=request.user)
+                print(f"{userdetail=}")
                 
-               
+                society = Society.objects.filter(id=request.user.userdetails.society_sub.id).first()
                 user_details = UserDetails.objects.create(
                     user=user,
                     role='committee_member',  # Assuming 'committee_member' is the role for subadmins
                     flat_number=flat_number,
                     flat_type=flat_type,
+                    society_sub=society,
                 )
-
-                
-                return redirect('subadmin_list')
+                return redirect('society_id_add_subadmin',society_id=society.id)
             else:
                 if user_exist_by_phone:
                     form.add_error('phone_no', "User with this phone number already exists.")
                 if user_exist_by_email:
                     form.add_error('email', "User with this email already exists.")
         else:
-            print(form.errors) 
+            print(form.errors)
     else:
         form = SubadminForm()
 
     return render(request, 'registration/add_subadmin.html', {'form': form})
 
-def subadmin_list(request):
-    subadmins = UserDetails.objects.all()
+
+@csrf_exempt
+def delete_subadmin(request, subadmin_id):
+    if request.method == 'DELETE':
+        subadmin = get_object_or_404(UserDetails, id=subadmin_id)
+        subadmin.delete()
+        return JsonResponse({'message': 'Subadmin deleted successfully'})
+    return JsonResponse({'error': 'Invalid request method'}, status=400)
+
+def society_id_subadmin_list(request, society_id):
+    subadmins = UserDetails.objects.filter(society_sub=society_id)
     return render(request, 'registration/subadmin_list.html', {'subadmins': subadmins})
 
 
@@ -449,13 +613,110 @@ def society_id_admin_dashboard(request,society_id):
 
 
 
-# api 
+
+
+@login_required
+def member_list(request):
+    members = Member.objects.filter(user=request.user)
+    return render(request, 'member_list.html', {'members': members})
+
+@login_required
+def member_detail(request, pk):
+    member = get_object_or_404(Member, pk=pk, user=request.user)
+    return render(request, 'member_detail.html', {'member': member})
+
+@login_required
+def member_create(request):
+    if request.method == 'POST':
+        form = MemberForm(request.POST)
+        if form.is_valid():
+            member = form.save(commit=False)
+            member.user = request.user
+            member.save()
+            messages.success(request, 'Member created successfully.')
+            return redirect('member_detail', pk=member.pk)
+    else:
+        form = MemberForm()
+    return render(request, 'member_form.html', {'form': form})
+
+@login_required
+def member_update(request, pk):
+    member = get_object_or_404(Member, pk=pk, user=request.user)
+    if request.method == 'POST':
+        form = MemberForm(request.POST, instance=member)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Member updated successfully.')
+            return redirect('member_detail', pk=member.pk)
+    else:
+        form = MemberForm(instance=member)
+    return render(request, 'member_form.html', {'form': form, 'member': member})
+
+@login_required
+def member_delete(request, pk):
+    member = get_object_or_404(Member, pk=pk, user=request.user)
+    if request.method == 'POST':
+        member.delete()
+        messages.success(request, 'Member deleted successfully.')
+        return redirect('member_list')
+    return render(request, 'member_confirm_delete.html', {'member': member})
+
+@login_required
+def family_member_list(request):
+    family_members = FamilyMember.objects.filter(member__user=request.user)
+    return render(request, 'family_member_list.html', {'family_members': family_members})
+
+@login_required
+def family_member_detail(request, pk):
+    family_member = get_object_or_404(FamilyMember, pk=pk, member__user=request.user)
+    return render(request, 'family_member_detail.html', {'family_member': family_member})
+
+@login_required
+def family_member_create(request):
+    if request.method == 'POST':
+        form = FamilyMemberForm(request.POST)
+        if form.is_valid():
+            family_member = form.save(commit=False)
+            family_member.member = get_object_or_404(Member, pk=form.cleaned_data['member'].pk, user=request.user)
+            family_member.save()
+            messages.success(request, 'Family member created successfully.')
+            return redirect('family_member_detail', pk=family_member.pk)
+    else:
+        form = FamilyMemberForm()
+    return render(request, 'family_member_form.html', {'form': form})
+
+@login_required
+def family_member_update(request, pk):
+    family_member = get_object_or_404(FamilyMember, pk=pk, member__user=request.user)
+    if request.method == 'POST':
+        form = FamilyMemberForm(request.POST, instance=family_member)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Family member updated successfully.')
+            return redirect('family_member_detail', pk=family_member.pk)
+    else:
+        form = FamilyMemberForm(instance=family_member)
+    return render(request, 'family_member_form.html', {'form': form, 'family_member': family_member})
+
+@login_required
+def family_member_delete(request, pk):
+    family_member = get_object_or_404(FamilyMember, pk=pk, member__user=request.user)
+    if request.method == 'POST':
+        family_member.delete()
+        messages.success(request, 'Family member deleted successfully.')
+        return redirect('family_member_list')
+    return render(request, 'family_member_confirm_delete.html', {'family_member': family_member})
+
+
+
+
+#api
 
 UserModel = get_user_model()
 
 @swagger_auto_schema(method='post', request_body=UserLoginSerializer, responses={200: 'OTP sent successfully.', 400: 'Invalid identifier format.'})
 @api_view(['POST'])
-@csrf_exempt
+@permission_classes([])
 def api_send_otp(request):
     """
     Send OTP to the user's phone number.
@@ -467,14 +728,17 @@ def api_send_otp(request):
             otp = '999000'
             request.session['otp'] = otp
             print(f"Generated OTP: {otp}")  # Debugging line, should be removed in production
+            
             return JsonResponse({'success': True, 'message': 'OTP sent successfully.'})
         except UserModel.DoesNotExist:
             return JsonResponse({'success': False, 'message': 'This phone number is not registered.'}, status=404)
     else:
         return JsonResponse({'success': False, 'message': 'Invalid identifier format.'}, status=400)
 
+
 @swagger_auto_schema(method='post', request_body=UserLoginSerializer, responses={200: 'OTP verification successful.', 400: 'Invalid OTP. Please try again.', 404: 'User not found.'})
 @api_view(['POST'])
+@permission_classes([])
 @csrf_exempt
 def api_verify_otp(request):
     """
@@ -482,15 +746,140 @@ def api_verify_otp(request):
     """
     phone_number = request.data.get('phone_number')
     otp = request.data.get('otp')
-    stored_otp = request.session.get('otp')
-    # if stored_otp and stored_otp == otp:
+    stored_otp = request.session.get('otp', '999000')
+
     if stored_otp == otp:
         try:
             user = UserModel.objects.get(phone_number=phone_number)
             user.backend = 'django.contrib.auth.backends.ModelBackend'
             login(request, user)
-            return JsonResponse({'success': True, 'message': 'OTP verification successful.'})
+            user_details = user.userdetails.first()
+
+            # Determine user role
+            if user.is_superuser:
+                user_role = "Super Admin"
+            elif user.is_staff:
+                user_role = "Admin"
+            elif user_details and user_details.role == 'committee_member':
+                user_role = "Subadmin"
+            else:
+                user_role = "Member"
+            
+            # Print role in terminal
+            print(f"User logged in: {phone_number} - Role: {user_role}")
+
+            return JsonResponse({
+                'success': True, 
+                'message': 'OTP verification successful.',
+                'user_role': user_role
+            })
         except UserModel.DoesNotExist:
             return JsonResponse({'success': False, 'message': 'User not found.'}, status=404)
     else:
         return JsonResponse({'success': False, 'message': 'Invalid OTP. Please try again.'}, status=400)
+    
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def api_member_profile(request):
+    """
+    API endpoint to retrieve member details after OTP verification.
+    """
+    try:
+        user = request.user
+        member = Member.objects.get(user=user)
+
+        # Serialize member details
+        member_serializer = UserSerializer(member)
+        member_data = member_serializer.data
+
+        # Serialize family members associated with this member
+        family_members = FamilyMember.objects.filter(member=member)
+        family_serializer = FamilyMemberSerializer(family_members, many=True)
+        family_data = family_serializer.data
+
+        # Constructing response data
+        response_data = {
+            'member': member_data,
+            'family_members': family_data
+        }
+
+        return JsonResponse(response_data)
+
+    except Member.DoesNotExist:
+        return JsonResponse({'error': 'Member details not found.'}, status=404)
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+    
+    
+# @api_view(['GET', 'POST'])
+# @permission_classes([IsAuthenticated])
+# def member_list(request):
+#     if request.method == 'GET':
+#         members = Member.objects.filter(user=request.user)
+#         serializer = MemberSerializer(members, many=True)
+#         return Response(serializer.data)
+
+#     elif request.method == 'POST':
+#         serializer = MemberSerializer(data=request.data)
+#         if serializer.is_valid():
+#             serializer.save(user=request.user)
+#             return Response(serializer.data, status=status.HTTP_201_CREATED)
+#         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+# @api_view(['GET', 'PUT', 'DELETE'])
+# @permission_classes([IsAuthenticated])
+# def member_detail(request, pk):
+#     member = get_object_or_404(Member, pk=pk, user=request.user)
+
+#     if request.method == 'GET':
+#         serializer = MemberSerializer(member)
+#         return Response(serializer.data)
+
+#     elif request.method == 'PUT':
+#         serializer = MemberSerializer(member, data=request.data, partial=True)
+#         if serializer.is_valid():
+#             serializer.save()
+#             return Response(serializer.data)
+#         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+#     elif request.method == 'DELETE':
+#         member.delete()
+#         return Response(status=status.HTTP_204_NO_CONTENT)
+
+# @api_view(['GET', 'POST'])
+# @permission_classes([IsAuthenticated])
+# def family_member_list(request):
+#     if request.method == 'GET':
+#         family_members = FamilyMember.objects.filter(member__user=request.user)
+#         serializer = FamilyMemberSerializer(family_members, many=True)
+#         return Response(serializer.data)
+
+#     elif request.method == 'POST':
+#         serializer = FamilyMemberSerializer(data=request.data)
+#         if serializer.is_valid():
+#             member = get_object_or_404(Member, id=request.data.get('member'), user=request.user)
+#             serializer.save(member=member)
+#             return Response(serializer.data, status=status.HTTP_201_CREATED)
+#         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+# @api_view(['GET', 'PUT', 'DELETE'])
+# @permission_classes([IsAuthenticated])
+# def family_member_detail(request, pk):
+#     family_member = get_object_or_404(FamilyMember, pk=pk, member__user=request.user)
+
+#     if request.method == 'GET':
+#         serializer = FamilyMemberSerializer(family_member)
+#         return Response(serializer.data)
+
+#     elif request.method == 'PUT':
+#         serializer = FamilyMemberSerializer(family_member, data=request.data, partial=True)
+#         if serializer.is_valid():
+#             serializer.save()
+#             return Response(serializer.data)
+#         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+#     elif request.method == 'DELETE':
+#         family_member.delete()
+#         return Response(status=status.HTTP_204_NO_CONTENT)

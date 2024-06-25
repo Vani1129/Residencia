@@ -1,127 +1,177 @@
 from django.http import HttpResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from user.models import Society
-from .forms import SocietyProfileForm
+from .forms import Society_profileForm
 from .models import Society_profile
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
-from django.views.decorators.http import require_http_methods
-from django.urls import reverse
+from django.views.generic import DetailView
+from .models import Society, Building, Unit
+from django.http import JsonResponse
+from .models import Society_profile, Society
+from .forms import Society_profileForm, BuildingForm, UnitForm, UnitForm
+from .models import Building, Unit, UserDetails
+from user.models import User
 
 
 def home(request):
    return HttpResponse("Welcome to the Society Home Page")
 
 
-def create_society_profile(request, society_id):
-    society_profiles = get_object_or_404(Society, id=society_id)
+
+def soc_profile(request, society_id=None):
+    print(f"{society_id=}")
     society = Society.objects.get(id=society_id)
-    if request.method == 'POST':
-        form = SocietyProfileForm(request.POST)
-        if form.is_valid():
-            society_profile = form.save(commit=False)
-            society_profile.society_name = society
-            society_profile.created_by = request.user
-            society_profile.updated_by = request.user
-            society_profile.save()
-            return redirect(create_society_profile)  # Replace 'success_url' with the appropriate URL name
-    else:
-        form = SocietyProfileForm()
-    return render(request, 'society/create_society_profile.html', {'form': form})
+   
     
-@login_required
-def society_profile_list(request, society_id=None):
-    if request.user.is_superuser and society_id is not None:
-        society_profiles = Society_profile.objects.filter(society_name__id=society_id)
+    society_profile = Society_profile.objects.filter(society_name=society).first()
+    print(f"{society_profile=}")
+    if request.method == 'POST':
+        form = Society_profileForm(request.POST, instance=society_profile)
+        if form.is_valid():
+            form.save()
     else:
-        user = request.user
+        form = Society_profileForm(instance=society_profile)
+    return render(request, 'society/soc_profile.html', {'socform': form})
+
+def society_profile_admin_view(request):
+    
+       
+    society_profile = get_object_or_404(Society_profile, society_name_society_name=request.user.society_name)
+    if request.method == 'POST':
+        form = Society_profileForm(request.POST, instance=society_profile)
+        if form.is_valid():
+            form.save()
+    else:
+        form = Society_profileForm(instance=society_profile)
+    return render(request, 'society/soc_profile.html', {'socform': form})
+
+
+def add_building_view(request, society_id):
+    society = None
+    society_profile = None
+
+    if request.user.is_superuser:
+        society = get_object_or_404(Society, id=society_id)
+        society_profile = get_object_or_404(Society_profile, society_id=society.id)
+    else:
+        user = User.objects.get(id=request.user.id)
+        society_profile = get_object_or_404(Society_profile, society_name=user.society_name)
+        society = society_profile.society_name
+    
+    if request.method == 'POST':
+        form = BuildingForm(request.POST)
+        if form.is_valid():
+            building = form.save(commit=False)
+            building.society = society_profile  # Assign the society_profile instance here
+            building.save()
+            return redirect('building_list', society_id=society.id)
+    else:
+        form = BuildingForm(initial={'society_name_display': society.society_name})
+    
+    return render(request, 'building/add_building.html', {'form': form, 'society': society})
+
+def edit_building(request, building_id):
+    building = get_object_or_404(Building, pk=building_id)
+    if request.method == 'POST':
+        form = BuildingForm(request.POST, instance=building)
+        if form.is_valid():
+            form.save()
+            return redirect('your_building_list_view')  # Replace with your actual view name
+    else:
+        form = BuildingForm(instance=building)
+    return render(request, 'building/edit_building.html', {'form': form})
+
+def delete_building(request, building_id):
+    building = get_object_or_404(Building, pk=building_id)
+    if request.method == 'POST':
+        building.delete()
+        return redirect('your_building_list_view')  # Replace with your actual view name
+    return render(request, 'building/delete_building.html', {'building': building})
+
+
+def add_unit(request):
+    if request.method == 'POST':
+        form = UnitForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return redirect('your_unit_list_view')  # Replace with your actual view name
+    else:
+        form = UnitForm()
+    return render(request, 'building/add_unit.html', {'form': form})
+
+def edit_unit(request, unit_id):
+    unit = get_object_or_404(Unit, pk=unit_id)
+    if request.method == 'POST':
+        form = UnitForm(request.POST, instance=unit)
+        if form.is_valid():
+            form.save()
+            return redirect('your_unit_list_view')  # Replace with your actual view name
+    else:
+        form = UnitForm(instance=unit)
+    return render(request, 'building/edit_unit.html', {'form': form})
+
+def delete_unit(request, unit_id):
+    unit = get_object_or_404(Unit, pk=unit_id)
+    if request.method == 'POST':
+        unit.delete()
+        return redirect('your_unit_list_view')  # Replace with your actual view name
+    return render(request, 'building/delete_unit.html', {'unit': unit})
+
+def unit_list(request, building_id):
+    building = get_object_or_404(Building, pk=building_id)
+    units = building.unit_set.all()  # Assuming a related name of 'unit_set'
+    form = UnitForm()
+    if request.method == 'POST':
+        form = UnitForm(request.POST)
+        if form.is_valid():
+            unit = form.save(commit=False)
+            unit.building = building
+            unit.save()
+            return redirect('unit_list', building_id=building.id)
+    return render(request, 'building/unit_list.html', {'building': building, 'units': units, 'form': form})
+
+
+
+def building_list_view(request, society_id):
+    society = None
+    if request.user.is_superuser:
+        society = get_object_or_404(Society, id=society_id)
+    else:
+        user = User.objects.get(id=society_id)
+        print(f"{user=}")
         print(f"{user.society_name=}")
-        society_profiles = Society_profile.objects.filter(society_name__society_name=user.society_name)
         
-    context = {
-        'society_profiles': society_profiles
-    }
-    return render(request, 'society/society_profile.html', context)
+        society = Society.objects.filter(society_name=user.society_name).first()
+        print(f"{society=}")
+        
+    buildings = Building.objects.filter(society__society_name=society)
+    print(f"{buildings=}")
+    return render(request, 'building/building_list.html', {'buildings': buildings, 'society': society})
 
-@login_required
-def add_society_profile(request):
+def floor_data_view(request, building_id):
+    building = get_object_or_404(Building, id=building_id)
+    units = Unit.objects.filter(building=building)
     if request.method == 'POST':
-        form = SocietyProfileForm(request.POST)
+        form = UnitForm(request.POST)
         if form.is_valid():
-            society_profile = form.save(commit=False)
-            society_profile.created_by = request.user
-            society_profile.updated_by = request.user
-            society_profile.save()
-            messages.success(request, 'Society profile added successfully.')
-            return redirect('society_profile_list')
+            unit = form.save(commit=False)
+            unit.building = building
+            unit.save()
+            return redirect('floor_data', building_id=building.id)
     else:
-        form = SocietyProfileForm()
-    context = {
-        'form': form
-    }
-    return render(request, 'society/create_society_profile.html', context)
+        form = UnitForm()
+    return render(request, 'building/floor_data.html', {'building': building, 'units': units, 'form': form})
+
 
 @login_required
-def edit_society_profile(request, pk):
-    society_profile = get_object_or_404(Society_profile, pk=pk)
-    if request.method == 'POST':
-        form = SocietyProfileForm(request.POST, instance=society_profile)
-        if form.is_valid():
-            society_profile = form.save(commit=False)
-            society_profile.updated_by = request.user
-            society_profile.save()
-            messages.success(request, 'Society profile updated successfully.')
-            return redirect('society_profile_list')
-    else:
-        form = SocietyProfileForm(instance=society_profile)
-    context = {
-        'form': form
-    }
-    return render(request, 'edit_society_profile.html', context)
-
-@login_required
-# def delete_society_profile(request, pk):
-#     society_profile = get_object_or_404(Society_profile, pk=pk)
-#     if request.method == 'POST':
-#         society_profile.delete()
-#         messages.success(request, 'Society profile deleted successfully.')
-#         return redirect('society_profile_list')
-#     context = {
-#         'society_profile': society_profile
-#     }
-#     return render(request, 'delete_society_profile.html', context)
-
-@require_http_methods(["DELETE"])
-def delete_society_profile(request, society_profile_id):
-    try:
-        society_profile = Society_profile.objects.get(pk=society_profile_id)
-        society_profile.delete()
-        return JsonResponse({'message': 'Society profile deleted successfully.'}, status=200)
-    except Society_profile.DoesNotExist:
-        return JsonResponse({'error': 'Society profile not found.'}, status=404)
-    except Exception as e:
-        return JsonResponse({'error': str(e)}, status=500)
-    
-# def edit_society_profile(request, society_profile_id):
-#     society_profile = get_object_or_404(Society_profile, pk=society_profile_id)
-    
-#     if request.method == 'POST':
-#         form = SocietyProfileForm(request.POST, instance=society_profile)
-#         if form.is_valid():
-#             form.save()
-#             return redirect(reverse('society_profile_list'))  # Redirect to the list page after saving
-#     else:
-#         form = SocietyProfileForm(instance=society_profile)
-    
-#     return render(request, 'society/edit_society_profile.html', {'form': form})
-
 def edit_society_profile(request, society_profile_id):
     society_profile = get_object_or_404(Society_profile, pk=society_profile_id)
     
     if request.method == 'POST':
         print("POST data:", request.POST)  # Log POST data for debugging
-        form = SocietyProfileForm(request.POST, instance=society_profile)
+        form = Society_profileForm(request.POST, instance=society_profile)
         if form.is_valid():
             try:
                 form.save()
@@ -140,6 +190,62 @@ def edit_society_profile(request, society_profile_id):
                     
             messages.error(request, "There were errors in the form. Please correct them and try again.")
     else:
-        form = SocietyProfileForm(instance=society_profile)
+        form = Society_profileForm(instance=society_profile)
     
-    return render(request, 'society/edit_society_profile.html', {'form': form})
+    return render(request, 'society/edit_soc_pro.html', {'form': form})
+
+
+
+# def delete_society_profile(request, pk):
+#     society_profile = get_object_or_404(Society_profile, pk=pk)
+#     if request.method == 'POST':
+#         society_profile.delete()
+#         messages.success(request, 'Society profile deleted successfully.')
+#         return redirect('society_profile_list')
+#     context = {
+#         'society_profile': society_profile
+#     }
+#     return render(request, 'delete_society_profile.html', context)
+
+
+    
+
+
+
+class BuildingDetailView(DetailView):
+    model = Building
+    template_name = 'c_build.html'
+    context_object_name = 'building'
+
+class UnitDetailView(DetailView):
+    model = Unit
+    template_name = 'c_unit.html'
+    context_object_name = 'unit'
+    
+    
+def floor_data_view(request, building_id):
+    building = get_object_or_404(Building, id=building_id)
+    society_name = building.society.society_name
+    units = Unit.objects.filter(building=building)
+    print(f"{building.society}")
+    residents = UserDetails.objects.filter(society_sub=society_name, role='resident')
+
+    if request.method == 'POST':
+        form = UnitForm(request.POST)
+        if form.is_valid():
+            unit = form.save(commit=False)
+            unit.building = building
+            unit.save()
+            return redirect('floor_data', building_id=building.id)
+    else:
+        form = UnitForm()
+
+    context = {
+        'building': building,
+        'units': units,
+        'residents': residents,
+        'form': form,
+        'society_name': society_name,
+    }
+
+    return render(request, 'building/floor_data.html', context)

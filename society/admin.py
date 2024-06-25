@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Society_profile, Staff
+from .models import Society_profile, Staff, Building, Unit
 
 @admin.register(Society_profile)
 class SocietyAdmin(admin.ModelAdmin):
@@ -10,6 +10,20 @@ class SocietyAdmin(admin.ModelAdmin):
 class StaffAdmin(admin.ModelAdmin):
     list_display = ('staff_id', 'society_name', 'designation', 'joined_date')
     search_fields = ('designation', 'society__society_name__society_name')
+
+@admin.register(Building)
+class BuildingAdmin(admin.ModelAdmin):
+    list_display = ( 'society', 'name')
+    search_fields = ('name', 'society_name__society_name')
+
+
+@admin.register(Unit)
+class UnitAdmin(admin.ModelAdmin):
+    list_display = ('building','unit_number', 'unit_type')
+    search_fields = ('unit_number', 'unit_type', 'society_name__society_name')
+
+
+
 
 # @admin.register(Registration)
 # class RegistrationAdmin(admin.ModelAdmin):

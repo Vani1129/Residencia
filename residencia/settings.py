@@ -52,6 +52,9 @@ INSTALLED_APPS = [
     'multiselectfield',
     'drf_yasg',
     'rest_framework',
+    'rest_framework.authtoken',
+    'django_filters',
+    'phonenumbers',
 ]
 
 MIDDLEWARE = [
@@ -147,10 +150,10 @@ AUTH_USER_MODEL = 'user.User'
 
 # Authentication backends
 AUTHENTICATION_BACKENDS = [
-    'user.backends.PhoneNumberOrEmailBackend',
-    'user.backends.CustomAuthBackend',
+    # 'user.backends.PhoneNumberOrEmailBackend',
+    # 'user.backends.CustomAuthBackend',
     'user.backends.OTPAuthBackend',
-    'django.contrib.auth.backends.ModelBackend',
+    # 'django.contrib.auth.backends.ModelBackend',
 ]
 
 # Media files settings
@@ -168,3 +171,31 @@ MESSAGE_TAGS = {
 
 CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap4"
 CRISPY_TEMPLATE_PACK = 'bootstrap4'
+
+REST_FRAMEWORK = {
+    # 'DEFAULT_AUTHENTICATION_CLASSES': 'rest_framework.authentication.TokenAuthentication',
+    # 'DEFAULT_PERMISSION_CLASSES': 'rest_framework.permissions.IsAuthenticated',
+    # 'DEFAULT_PERMISSION_CLASSES': [
+    #     'rest_framework.authentication.SessionAuthentication',
+    #     'rest_framework.authentication.BasicAuthentication',
+    # ],
+    # 'PAGE_SIZE': 10
+    
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework.authentication.TokenAuthentication',
+        # 'rest_framework.authentication.SessionAuthentication',
+        # 'rest_framework.authentication.BasicAuthentication',
+    ],
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.IsAuthenticated',
+    ],
+    
+}
+
+
+dependencies = [
+    ('user', '0001_initial'),
+]
+
+
+

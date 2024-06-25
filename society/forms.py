@@ -1,17 +1,25 @@
 from django import forms
 from user.models import User
 from .models import Society_profile
+from .models import Building, Unit
+from crispy_forms.helper import FormHelper
+from crispy_forms.layout import Layout, Submit, Row, Column
 
-from django import forms
-from .models import Society_profile
+class Society_profileForm(forms.ModelForm):
+    society_name_display = forms.CharField(
+        label='Society Name',
+        required=False,
+        widget=forms.TextInput(attrs={'class': 'form-control', 'readonly': 'readonly'})
+    )
+    society_type_display = forms.CharField(
+        label='Society Type',
+        required=False,
+        widget=forms.TextInput(attrs={'class': 'form-control', 'readonly': 'readonly'})
+    )
 
-class SocietyProfileForm(forms.ModelForm):
-    society_name_display = forms.CharField(label='Society Name', required=False, widget=forms.TextInput(attrs={'class': 'form-control', 'readonly': 'readonly'}))
-    
     class Meta:
         model = Society_profile
         fields = [
-            'type',
             'total_numbers',
             'address',
             'pan_no',
@@ -22,7 +30,6 @@ class SocietyProfileForm(forms.ModelForm):
             'zip_code',
         ]
         widgets = {
-            'type': forms.SelectMultiple(attrs={'class': 'form-control', 'readonly': 'readonly', 'disabled': 'disabled'}),
             'total_numbers': forms.NumberInput(attrs={'class': 'form-control'}),
             'address': forms.TextInput(attrs={'class': 'form-control'}),
             'pan_no': forms.TextInput(attrs={'class': 'form-control'}),
@@ -34,63 +41,50 @@ class SocietyProfileForm(forms.ModelForm):
         }
 
     def __init__(self, *args, **kwargs):
-        super(SocietyProfileForm, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         instance = kwargs.get('instance')
         if instance and instance.society_name:
-            self.fields['society_name_display'].initial = self.instance.society_name.society_name
-        else:
-            self.fields['society_name_display'].widget.attrs['readonly'] = False 
-       
-        # self.fields['society_name_display'].initial = self.instance.society_name.society_name
-        # self.fields['type'].disabled = True  # Ensure the type field is disabled
+            
+            self.fields['society_name_display'].initial = instance.society_name.society_name
+            self.fields['society_type_display'].initial = ', '.join([str(t) for t in instance.society_name.type.all()])
 
-    # def __init__(self, *args, **kwargs):
-    #     super(SocietyProfileForm, self).__init__(*args, **kwargs)
-    #     if self.instance:
-    #         self.fields['society_name_display'].initial = self.instance.society_name.name
-    #         self.fields['type_display'].initial = ', '.join([str(type) for type in self.instance.type.all()])
+        # Initialize the crispy forms helper
+        self.helper = FormHelper()
+        self.helper.form_method = 'post'
+        self.helper.layout = Layout(
+            Row(
+                Column('society_name_display', css_class='form-group col-md-6 mb-3'),
+                Column('society_type_display', css_class='form-group col-md-6 mb-3'),
+                css_class='form-row',
+            ),
+            Row(
+                Column('total_numbers', css_class='form-group col-md-6 mb-3'),
+                Column('address', css_class='form-group col-md-6 mb-3'),
+                css_class='form-row',
+            ),
+            Row(
+                Column('pan_no', css_class='form-group col-md-6 mb-3'),
+                Column('gst_no', css_class='form-group col-md-6 mb-3'),
+                css_class='form-row',
+            ),
+            Row(
+                Column('registration_no', css_class='form-group col-md-6 mb-3'),
+                Column('city', css_class='form-group col-md-6 mb-3'),
+                css_class='form-row',
+            ),
+            Row(
+                Column('state', css_class='form-group col-md-6 mb-3'),
+                Column('zip_code', css_class='form-group col-md-6 mb-3'),
+                css_class='form-row',
+            ),
+            Submit('submit', 'Submit', css_class='btn btn-primary')
+        )
 
-    
     def clean_type(self):
         # Ensure type data is not changed
         return self.instance.type.all()
-    
-# class SocietyProfileForm(forms.ModelForm):
-#     society_name = forms.CharField(widget=forms.TextInput(attrs={'class': 'form-control', 'readonly': 'readonly'}))
-#     type = forms.CharField(widget=forms.TextInput(attrs={'class': 'form-control', 'readonly': 'readonly'}))
 
-#     class Meta:
-#         model = Society_profile
-#         fields = [
-#             'society_name',
-#             'type',
-#             'total_numbers',
-#             'address',
-#             'pan_no',
-#             'gst_no',
-#             'registration_no',
-#             'city',
-#             'state',
-#             'zip_code',
-#         ]
-#         widgets = {
-#             'total_numbers': forms.NumberInput(attrs={'class': 'form-control'}),
-#             'address': forms.TextInput(attrs={'class': 'form-control'}),
-#             'pan_no': forms.TextInput(attrs={'class': 'form-control'}),
-#             'gst_no': forms.TextInput(attrs={'class': 'form-control'}),
-#             'registration_no': forms.TextInput(attrs={'class': 'form-control'}),
-#             'city': forms.TextInput(attrs={'class': 'form-control'}),
-#             'state': forms.TextInput(attrs={'class': 'form-control'}),
-#             'zip_code': forms.TextInput(attrs={'class': 'form-control'}),
-#         }
 
-#     def __init__(self, *args, **kwargs):
-#         super(SocietyProfileForm, self).__init__(*args, **kwargs)
-#         if self.instance:
-#             self.fields['society_name'].initial = self.instance.society_name
-#             self.fields['type'].initial = ", ".join([str(t) for t in self.instance.type.all()])
-
-        
 class UserForm(forms.ModelForm):
     password = forms.CharField(widget=forms.PasswordInput)
     class Meta:
@@ -105,3 +99,49 @@ class OTPForm(forms.Form):
 class LoginForm(forms.Form):
     identifier = forms.CharField(max_length=255)
     password = forms.CharField(widget=forms.PasswordInput)
+
+
+
+
+class BuildingForm(forms.ModelForm):
+    society_name_display = forms.CharField(
+        label='Society Name',
+        required=False,
+        widget=forms.TextInput(attrs={'class': 'form-control', 'readonly': 'readonly'})
+    )
+
+    class Meta:
+        model = Building
+        fields = ['name']
+        widgets = {
+            'name': forms.TextInput(attrs={'class': 'form-control'}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        instance = kwargs.get('instance')
+        super(BuildingForm, self).__init__(*args, **kwargs)
+        if instance and instance.society:
+            self.fields['society_name_display'].initial = instance.society.society.society_name
+
+
+class UnitForm(forms.ModelForm):
+    building_name_display = forms.CharField(
+        label='Building Name',
+        required=False,
+        widget=forms.TextInput(attrs={'class': 'form-control', 'readonly': 'readonly'})
+    )
+
+    class Meta:
+        model = Unit
+        fields = ['unit_number', 'unit_type', 'area']
+        widgets = {
+            'unit_number': forms.TextInput(attrs={'class': 'form-control'}),
+            'unit_type': forms.TextInput(attrs={'class': 'form-control'}),
+            'area': forms.NumberInput(attrs={'class': 'form-control'}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super(UnitForm, self).__init__(*args, **kwargs)
+        instance = kwargs.get('instance')
+        if instance and instance.building:
+            self.fields['building_name_display'].initial = instance.building.name

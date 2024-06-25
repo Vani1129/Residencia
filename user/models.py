@@ -31,8 +31,8 @@ class UserManager(BaseUserManager):
     
 class User(AbstractBaseUser):
     full_name = models.CharField(max_length=255, null=True, blank=True)
-    email = models.EmailField(unique=True)
-    phone_number = models.CharField(max_length=15, unique=True)
+    email = models.EmailField(unique=True,null=True, blank=True)
+    phone_number = models.CharField(max_length=10, unique=True,null=True, blank=True)
     image = models.ImageField(upload_to='media/', blank=True, null=True)
     society_name = models.CharField(max_length=255, null=True, blank=True)
     address = models.CharField(max_length=255, null=True, blank=True)
@@ -62,9 +62,10 @@ class User(AbstractBaseUser):
     
 # models.py
 class Society(models.Model):
+    
     society_name = models.CharField(max_length=255)
     type = models.ManyToManyField(Type,related_name="society_type")
-    is_active = models.BooleanField(default=True)
+    is_active = models.BooleanField()
 
     def __str__(self):
         return self.society_name
@@ -97,20 +98,39 @@ class UserDetails(models.Model):
     
     
 class Member(models.Model):
+    
+    GENDER_CHOICES = [
+        ('M', 'Male'),
+        ('F', 'Female'),
+    ]
     society = models.ForeignKey('society.Society_profile', on_delete=models.CASCADE, related_name='members')
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='members')
-    user_details = models.ForeignKey(UserDetails, on_delete=models.CASCADE, related_name='members')
-    flat_number = models.CharField(max_length=20)  # Add this field
-    member_name = models.CharField(max_length=100)
-    phone_no = models.CharField(max_length=20)
-    age = models.IntegerField()
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
+    building = models.CharField(max_length=100,null=True, blank=True)
+    flat_number = models.CharField(max_length=20,null=True, blank=True)
+    date_of_birth = models.DateField(null=True, blank=True)
+    gender = models.CharField(max_length=1, choices=GENDER_CHOICES )
+    country = models.CharField(max_length=5, null=True, blank=True)
+    member_type = models.CharField(max_length=50, null=True, blank=True)
+    
+    def __str__(self):
+        return f"Member: {self.user.full_name} ({self.user.email})"
+
+class FamilyMember(models.Model):
+    GENDER_CHOICES = [
+        ('M', 'Male'),
+        ('F', 'Female'),
+    ]
+    member = models.ForeignKey(Member, on_delete=models.CASCADE, related_name='family_members')
+    full_name = models.CharField(max_length=50,null=True, blank=True)
+    date_of_birth = models.DateField(null=True, blank=True)
+    gender = models.CharField(max_length=1, choices=GENDER_CHOICES,null=True, blank=True)
+    phone_number = models.CharField(max_length=20,null=True, blank=True)
+    family_type = models.CharField(max_length=50,null=True, blank=True)
 
     def __str__(self):
-        return f"Member: {self.member_name} ({self.user.email})"
-
-
+        return f"Family Member: {self.full_name} of {self.member.full_name}"
+    
+    
 
     
     
@@ -134,3 +154,10 @@ class CustomUser(AbstractUser):
     
 
 
+class Society_profile(models.Model):
+    society_name = models.OneToOneField(Society, on_delete=models.CASCADE, related_name='profile')
+
+    def __str__(self):
+        return f"Profile of {self.society_name}"
+    
+    

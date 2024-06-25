@@ -1,0 +1,127 @@
+{% extends "base.html" %}
+{% load crispy_forms_tags %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-10 col-md-12">
+            <div class="card">
+                <div class="card-header">
+                    <h1 class="custom-title">{{ society.society_name }}</h1>
+                    <h4 class="card-title">Member Registration</h4>
+                </div>
+                <div class="card-body">
+                    <form method="post" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                {{ form.society_name|as_crispy_field }}
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                {{ form.building|as_crispy_field }}
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                {{ form.flat_number|as_crispy_field }}
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                {{ form.full_name|as_crispy_field }}
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                {{ form.date_of_birth|as_crispy_field }}
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                {{ form.gender|as_crispy_field }}
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                {{ form.email|as_crispy_field }}
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                {{ form.phone_number|as_crispy_field }}
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                {{ form.country|as_crispy_field }}
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                {{ form.address|as_crispy_field }}
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                {{ form.number_of_members|as_crispy_field }}
+                                
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                {{ form.member_type|as_crispy_field }}
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                {{ form.image|as_crispy_field }}
+                            </div>
+                        </div>
+
+                        <h2 class="mt-4">Family Information</h2>
+                        <div id="family-members">
+                            <div class="family-member">
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        {{ family_form.family_full_name|as_crispy_field }}
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        {{ family_form.family_date_of_birth|as_crispy_field }}
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        {{ family_form.family_gender|as_crispy_field }}
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        {{ family_form.family_phone_number|as_crispy_field }}
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        {{ family_form.family_type|as_crispy_field }}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <button type="button" id="add-family-member" class="btn btn-secondary mt-2">+ Add Family Member</button>
+                        
+                        
+                        <div class="mt-4">
+                            <button type="submit" class="btn btn-primary">Member Registration</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.getElementById('add-family-member').addEventListener('click', function() {
+        var familyMembers = document.getElementById('family-members');
+        var newMember = familyMembers.firstElementChild.cloneNode(true);
+        newMember.querySelectorAll('input, select').forEach(function(input) {
+            input.value = '';
+        });
+        familyMembers.appendChild(newMember);
+    });
+</script>
+{% endblock %}

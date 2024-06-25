@@ -68,9 +68,8 @@
 </head>
 <body>
     <h1>Sub Admin List</h1>
-    <button class="add-button" onclick="window.location.href='{% url 'society_id_add_subadmin' %}'">
-        <i class="fas fa-plus button-icon"></i> Add Sub Admin
-    </button>
+    <a class="add-button text-white" href="{% url 'society_id_add_subadmin' request.resolver_match.kwargs.society_id %}">
+        <i class="fas fa-plus button-icon"></i> Add Sub Admin    </button>
     <br><br>
     <div class="table-header">
         <span>Showing {{ subadmins.count }} entries</span>
@@ -86,7 +85,7 @@
                 <th>Email</th>
                 <th>Phone Number</th>
                 <th>Flat Number</th>
-                <th>Flat Type</th>
+              
                 <th>Action</th>
             </tr>
         </thead>
@@ -99,7 +98,7 @@
                 <td>{{ subadmin.user.email }}</td>
                 <td>{{ subadmin.user.phone_number }}</td>
                 <td>{{ subadmin.flat_number }}</td>
-                <td>{{ subadmin.flat_type }}</td>
+                
                 <td>
 
                     {% comment %} <button class="edit-button" onclick="editSubadmin('{{ subadmin.id }}')">

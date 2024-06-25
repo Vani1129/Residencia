@@ -3,7 +3,7 @@ from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.utils.html import format_html
 from django.contrib.auth import get_user_model
 
-from .models import UserDetails, Member, Society, Type
+from .models import UserDetails, Member, Society, Type,FamilyMember
 
 User = get_user_model()
 
@@ -14,10 +14,7 @@ admin.site.register(UserDetails)
 #     list_display = ('flat_number', 'age')
 #     # Add any other configurations you need
 
-@admin.register(Member)
-class MemberAdmin(admin.ModelAdmin):
-    list_display = ('society', 'user', 'user_details', 'flat_number', 'member_name', 'phone_no', 'age')
-    # Add any other configurations you need
+
 
 @admin.register(Society)
 class SocietyAdmin(admin.ModelAdmin):
@@ -58,3 +55,7 @@ class CustomUserAdmin(BaseUserAdmin):
 
 
 admin.site.register(Type)
+
+admin.site.register(Member)
+
+admin.site.register(FamilyMember)
