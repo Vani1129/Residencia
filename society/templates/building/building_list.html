@@ -11,7 +11,7 @@
         <div class="col-md-2 text-right">
             {% if request.user.is_superuser %}
             <button class="add-button" onclick="window.location.href='{% url 'add_building' request.resolver_match.kwargs.society_id %}'">
-                <i class="fas fa-plus button-icon"></i> Add Sub Admin
+                <i class="fas fa-plus button-icon"></i> Add Building
             </button>
            
             {% else %}
@@ -26,7 +26,7 @@
             
                 {% for building in buildings %}
                 <li class="list-group-item d-flex justify-content-between align-items-center">
-                    <h3><a href="{% url 'floor_data' building.id %}">{{ building.name }}</a><h3>
+                    <h3><a href="{% url 'floor_data' society_id=request.resolver_match.kwargs.society_id building_id=building.id %}">{{ building.name }}</a><h3>
                     {% comment %} <div>
                         <a href="{% url 'edit_building' building.id %}" class="btn btn-sm btn-warning">Edit</a>
                         <a href="{% url 'delete_building' building.id %}" class="btn btn-sm btn-danger">Delete</a>

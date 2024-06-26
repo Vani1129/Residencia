@@ -5,7 +5,7 @@ from .models import Building, Unit
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Layout, Submit, Row, Column
 
-class Society_profileForm(forms.ModelForm):
+class SocietyProfileForm(forms.ModelForm):
     society_name_display = forms.CharField(
         label='Society Name',
         required=False,
@@ -20,6 +20,8 @@ class Society_profileForm(forms.ModelForm):
     class Meta:
         model = Society_profile
         fields = [
+            'society_name_display',
+            'society_type_display',
             'total_numbers',
             'address',
             'pan_no',
@@ -42,12 +44,6 @@ class Society_profileForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        instance = kwargs.get('instance')
-        if instance and instance.society_name:
-            
-            self.fields['society_name_display'].initial = instance.society_name.society_name
-            self.fields['society_type_display'].initial = ', '.join([str(t) for t in instance.society_name.type.all()])
-
         # Initialize the crispy forms helper
         self.helper = FormHelper()
         self.helper.form_method = 'post'
@@ -79,6 +75,7 @@ class Society_profileForm(forms.ModelForm):
             ),
             Submit('submit', 'Submit', css_class='btn btn-primary')
         )
+
 
     def clean_type(self):
         # Ensure type data is not changed

@@ -61,15 +61,20 @@ class User(AbstractBaseUser):
         return self.email
     
 # models.py
+from django.db import models
+from django.utils import timezone
+
 class Society(models.Model):
-    
     society_name = models.CharField(max_length=255)
-    type = models.ManyToManyField(Type,related_name="society_type")
+    type = models.ManyToManyField(Type, related_name="society_type")
     is_active = models.BooleanField()
+    from_date = models.DateField(default=timezone.now)
+    to_date = models.DateField(null=True, blank=True)
+    from_time = models.TimeField(default=timezone.now)
+    to_time = models.TimeField(null=True, blank=True)
 
     def __str__(self):
         return self.society_name
-
 
 class UserDetails(models.Model):
     society_sub = models.ForeignKey(Society, on_delete=models.CASCADE, related_name='society_subadmin',null=True)
@@ -103,8 +108,8 @@ class Member(models.Model):
         ('M', 'Male'),
         ('F', 'Female'),
     ]
-    society = models.ForeignKey('society.Society_profile', on_delete=models.CASCADE, related_name='members')
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='members')
+    society = models.ForeignKey(Society, on_delete=models.CASCADE, related_name='members')
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='members', null=True, blank=True)
     building = models.CharField(max_length=100,null=True, blank=True)
     flat_number = models.CharField(max_length=20,null=True, blank=True)
     date_of_birth = models.DateField(null=True, blank=True)
@@ -125,7 +130,7 @@ class FamilyMember(models.Model):
     date_of_birth = models.DateField(null=True, blank=True)
     gender = models.CharField(max_length=1, choices=GENDER_CHOICES,null=True, blank=True)
     phone_number = models.CharField(max_length=20,null=True, blank=True)
-    family_type = models.CharField(max_length=50,null=True, blank=True)
+    family_relation = models.CharField(max_length=50,null=True, blank=True)
 
     def __str__(self):
         return f"Family Member: {self.full_name} of {self.member.full_name}"

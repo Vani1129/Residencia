@@ -68,7 +68,7 @@
 <body>
     <h1>Resident List</h1>
     
-    <button class="add-button" onclick="window.location.href='{% url 'add_resident' request.resolver_match.kwargs.building_id society_id %}'">
+    <button class="add-button" onclick="window.location.href='{% url 'add_resident' society_id=request.resolver_match.kwargs.society_id building_id=building.id %}'">
         <i class="fas fa-plus button-icon"></i> Add Resident
     </button>
     
@@ -86,21 +86,23 @@
                 <th>Email</th>
                 <th>Phone Number</th>
                 <th>Flat Number</th>
-                <th>Flat Type</th>
+                
                 <th>Action</th>
             </tr>
         </thead> 
         <tbody id="tableBody">
-            {% for resident in residents %}
+            {% for resident in members %}
+            {% comment %} {{resident.user.full_name}} {% endcomment %}
             <tr id="resident-row-{{ resident.id }}">
                 <td>{{ resident.id }}</td>
                 <td>{{ resident.user.full_name }}</td>
                 <td>{{ resident.user.email }}</td>
                 <td>{{ resident.user.phone_number }}</td>
                 <td>{{ resident.flat_number }}</td>
-                <td>{{ resident.user.flat_type }}</td>
+                
                 <td>
-                    {% comment %} <a href="{% url 'edit_resident' resident.pk %}" class="edit-button"><i class="fas fa-pencil-alt button-icon"></i></a> {% endcomment %}
+                    
+                    <a href="#" class="edit-button"><i class="fas fa-pencil-alt button-icon"></i></a>
                     <button class="delete-button" onclick="deleteResident('{{ resident.id }}')">
                         <i class="fas fa-times button-icon"></i>
                     </button>

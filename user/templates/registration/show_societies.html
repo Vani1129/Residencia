@@ -115,7 +115,7 @@
             </tr>
         </thead>
         <tbody id="tableBody">
-            {% for society in societies %}
+            {% for society in societies|dictsortreversed:"id" %}
             <tr id="society-row-{{ society.id }}">
                 <td>{{ society.id }}</td>
                 <td class="clickable" onclick="redirectToDetails({{ society.id }})">{{ society.society_name }}</td>
@@ -125,8 +125,6 @@
                             <li>{{ soc }}</li>
                         {% endfor %}
                     </ul>
-                   {% comment %} {% for Type in society.choices.all %}
-                        {{  }} {% endcomment %}
                 </td>
                 <td style="color: {% if society.is_active %}green{% else %}red{% endif %};">
                     {% if society.is_active %}Active{% else %}Inactive{% endif %}
@@ -148,12 +146,6 @@
         <h2>Society Details</h2>
         <div id="society-details"></div>
     </div>
-    <!-- Sidebar to display society details -->
-    {% comment %} <div id="sidebar">
-        <span id="close-sidebar" onclick="closeSidebar()">X</span>
-        <h2>Society Details</h2>
-        <div id="society-details"></div>
-    </div> {% endcomment %}
 
     <script>
         function redirectToDetails(societyId) {
@@ -219,6 +211,7 @@
                 }
             }
         }
+
         document.addEventListener('DOMContentLoaded', function() {
             const urlParams = new URLSearchParams(window.location.search);
             const societyId = urlParams.get('societyId');

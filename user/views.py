@@ -35,10 +35,12 @@ from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
 from rest_framework.permissions import IsAuthenticated
 from rest_framework import status
+from rest_framework.authtoken.models import Token
 from .forms import UserForm, OTPForm, MemberForm, SocietyForm, SubadminForm, UserEditForm,FamilyMemberForm
 from .utils import generate_otp
 from .models import Society, UserDetails, Member, FamilyMember
-from .serializers import UserLoginSerializer,UserSerializer, FamilyMemberSerializer
+from .serializers import UserLoginSerializer,MemberProfileSerializer, MemberCreateUpdateSerializer
+
 from django.contrib.auth import get_user_model
 from society.models import Society_profile
 from django.contrib.auth.decorators import login_required
@@ -53,7 +55,7 @@ from .forms import MemberForm, FamilyMemberForm
 from society.models import  Building
 
 
-def resident_list(request, building_id):
+def resident_list(request, society_id, building_id):
     building = get_object_or_404(Building, id=building_id)
     members = Member.objects.filter(building=building)
 
@@ -61,7 +63,8 @@ def resident_list(request, building_id):
         'building': building,
         'members': members,
     }
-    return render(request, 'users/resident_list.html', context)
+    return render(request, 'building/floor_data.html', context)
+
 
 
 def add_resident(request, society_id, building_id):
@@ -72,7 +75,7 @@ def add_resident(request, society_id, building_id):
         form = MemberForm(request.POST, request.FILES)
         family_form = FamilyMemberForm(request.POST)
         if form.is_valid() and family_form.is_valid():
-            name = form.cleaned_data.get('name')
+            name = form.cleaned_data.get('full_name')
             phone = form.cleaned_data.get('phone_number')
             email = form.cleaned_data.get('email')
             flat_number = form.cleaned_data.get('flat_number')
@@ -110,14 +113,15 @@ def add_resident(request, society_id, building_id):
                         family_instance.member = member
                         family_instance.save()
 
-                return redirect('floor_data', building_id=building.id)
+                return redirect('floor_data', building_id=building.id, society_id=society.id)
             else:
                 if user_exist_by_phone:
                     form.add_error('phone_number', "User with this phone number already exists.")
                 if user_exist_by_email:
                     form.add_error('email', "User with this email already exists.")
     else:
-        form = MemberForm(initial={'society_name_display': society.society_name})
+        form = MemberForm(initial={'society_name_display': society.society_name,'building_display':building.name})
+        
         family_form = FamilyMemberForm()
 
     context = {
@@ -126,6 +130,20 @@ def add_resident(request, society_id, building_id):
     }
     return render(request, 'building/add_resident.html', context)
 
+
+
+def delete_resident(request, resident_id):
+    resident = get_object_or_404(Member, id=resident_id)
+    user_id = resident.user.id
+    
+    if request.method == 'DELETE':
+        # Delete the resident and associated user
+        resident.delete()
+        User.objects.filter(id=user_id).delete()
+        
+        return JsonResponse({'message': 'Resident deleted successfully.'}, status=204)
+    
+    return JsonResponse({'error': 'Method not allowed.'}, status=405)
 
 
 def home(request):
@@ -221,7 +239,7 @@ def admin_dashboard(request,society_id):
     society = Society.objects.get(id=society_id)
     users = UserModel.objects.filter(society_name=society.society_name)
     # SubadminForm = UserDetails.objects.filter(role='Sub Admin',)
-    return render(request, 'registration/admin_dashboard.html', {'users': users})
+    return render(request, 'registration/admin_dashboard.html', {'users': users, 'society': society})
 
 def society_id_subadmin_list(request, society_id):
     subadmins = UserDetails.objects.filter(society_sub=society_id, role='committee_member')
@@ -341,6 +359,12 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+from django.shortcuts import render, redirect
+from django.utils import timezone
+from .forms import SocietyForm
+from .models import Society, Type
+from society.models import Society_profile  # Assuming these are your model names
+
 def add_society(request):
     if request.method == 'POST':
         form = SocietyForm(request.POST)
@@ -348,10 +372,15 @@ def add_society(request):
             print("Form is valid")
             print(form.cleaned_data)
             types = form.cleaned_data["type"]
-            print(f"{form.cleaned_data.get("is_active")=}")
+            print(f"{form.cleaned_data.get('is_active')=}")
+            
             society = Society.objects.create(
                 society_name=form.cleaned_data["society_name"],
-                is_active=form.cleaned_data.get("is_active")  # Use get() with a default value
+                is_active=form.cleaned_data.get("is_active", False),  # Use get() with a default value
+                from_date=form.cleaned_data["from_date"],
+                to_date=form.cleaned_data.get("to_date"),
+                from_time=form.cleaned_data["from_time"],
+                to_time=form.cleaned_data.get("to_time")
             )
             
             for type_obj in types:
@@ -593,12 +622,18 @@ def delete_user(request, user_id):
     
 
 
+
 def society_details(request, society_id):
-    society = get_object_or_404(Society, pk=society_id)
-    context = {
-        'society': society
-    }
-    return render(request, 'registration/society_details.html', {'society': society})
+    society = get_object_or_404(Society, id=society_id)
+    society_profile = Society_profile.objects.filter(society_name=society).first()
+    
+    # Debugging prints to check values
+    print(society_profile.address)  # Check if this prints the address correctly
+    
+    return render(request, 'registration/society_details.html', {
+        'society': society,
+        'society_profile': society_profile,
+    })
 
 def society_id_subadmin_list(request,society_id):
     subadmins = UserDetails.objects.filter(society_sub=society_id)
@@ -767,11 +802,15 @@ def api_verify_otp(request):
             
             # Print role in terminal
             print(f"User logged in: {phone_number} - Role: {user_role}")
+            
+            token, created   = Token.objects.get_or_create(user=user)
 
             return JsonResponse({
                 'success': True, 
                 'message': 'OTP verification successful.',
-                'user_role': user_role
+                'user_role': user_role,
+                'token': token.key,
+                
             })
         except UserModel.DoesNotExist:
             return JsonResponse({'success': False, 'message': 'User not found.'}, status=404)
@@ -780,38 +819,46 @@ def api_verify_otp(request):
     
 
 
-@api_view(['GET'])
+@api_view(['GET', 'POST'])
 @permission_classes([IsAuthenticated])
 def api_member_profile(request):
     """
-    API endpoint to retrieve member details after OTP verification.
+    API endpoint to retrieve or update member details after OTP verification.
     """
-    try:
-        user = request.user
-        member = Member.objects.get(user=user)
+    user = request.user
 
-        # Serialize member details
-        member_serializer = UserSerializer(member)
-        member_data = member_serializer.data
+    if request.method == 'GET':
+        try:
+            member = Member.objects.get(user=user)
+            print(f"{member=}")
+            #Serialize member details including family members
+            member_serializer = MemberProfileSerializer(member)
+            member_data = member_serializer.data
+            # print( member_serializer.data)
 
-        # Serialize family members associated with this member
-        family_members = FamilyMember.objects.filter(member=member)
-        family_serializer = FamilyMemberSerializer(family_members, many=True)
-        family_data = family_serializer.data
+            return Response({'member': member_data})
 
-        # Constructing response data
-        response_data = {
-            'member': member_data,
-            'family_members': family_data
-        }
+        except Member.DoesNotExist:
+            return Response({'error': 'Member details not found.'}, status=404)
 
-        return JsonResponse(response_data)
+    elif request.method == 'POST':
+        try:
+            member = Member.objects.get(user=user)
+        except Member.DoesNotExist:
+            member = None
 
-    except Member.DoesNotExist:
-        return JsonResponse({'error': 'Member details not found.'}, status=404)
-    except Exception as e:
-        return JsonResponse({'error': str(e)}, status=500)
-    
+        print(request.data)
+
+        member_serializer = MemberCreateUpdateSerializer(data=request.data)
+        if member_serializer.is_valid():
+            if member:
+                member_serializer.update(member, member_serializer.validated_data)
+            else:
+                member_serializer.save(user=user)
+
+            return Response({'message': 'Member details saved successfully.'})
+
+        return Response(member_serializer.errors, status=400)
     
 # @api_view(['GET', 'POST'])
 # @permission_classes([IsAuthenticated])

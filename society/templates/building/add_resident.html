@@ -7,8 +7,8 @@
         <div class="col-lg-10 col-md-12">
             <div class="card">
                 <div class="card-header">
-                    <h1 class="custom-title">{{ society.society_name }}</h1>
                     <h4 class="card-title">Member Registration</h4>
+
                 </div>
                 <div class="card-body">
                     <form method="post" enctype="multipart/form-data">
@@ -16,10 +16,10 @@
                         
                         <div class="row">
                             <div class="col-md-6 mb-3">
-                                {{ form.society_name|as_crispy_field }}
+                                {{ form.society_name_display|as_crispy_field }}
                             </div>
                             <div class="col-md-6 mb-3">
-                                {{ form.building|as_crispy_field }}
+                                {{ form.building_display|as_crispy_field }}
                             </div>
                         </div>
                         
@@ -96,7 +96,7 @@
                                 </div>
                                 <div class="row">
                                     <div class="col-md-6 mb-3">
-                                        {{ family_form.family_type|as_crispy_field }}
+                                        {{ family_form.family_relation|as_crispy_field }}
                                     </div>
                                 </div>
                             </div>

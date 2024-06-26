@@ -44,8 +44,7 @@ urlpatterns = [
     path('subadmin_list/', views.society_id_subadmin_list, name='subadmin_list'),
     path('swagger/', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
     path('redoc/', schema_view.with_ui('redoc', cache_timeout=0), name='schema-redoc'),
-    
-    path('floor-data/<int:building_id>/', views.resident_list, name='resident_list'),
+   path('floor-data/<int:society_id>/<int:building_id>/', views.resident_list, name='floor_data'),
     path('add_resident/<int:building_id>/<int:society_id>/', views.add_resident, name='add_resident'),
     # other patterns...
 ]

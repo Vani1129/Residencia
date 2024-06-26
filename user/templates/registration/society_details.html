@@ -60,11 +60,11 @@
                 <h5 class="card-title">Society Information</h5>
             </div>
             <div class="card-body">
-                <p><strong>Address:</strong> {{ society.address }}</p>
-                <p><strong>City:</strong> {{ society.city }}</p>
-                <p><strong>State:</strong> {{ society.state }}</p>
-                <p><strong>Pincode:</strong> {{ society.pincode }}</p>
-                <p><strong>Registration Date:</strong> {{ society.registration_date|date:"F d, Y" }}</p>
+                <p><strong>Address:</strong> {{ society_profile.address }}</p>
+                <p><strong>City:</strong> {{ society_profile.city }}</p>
+                <p><strong>State:</strong> {{ society_profile.state }}</p>
+                <p><strong>Pincode:</strong> {{ society_profile.zip_code }}</p>
+                <p><strong>Registration No:</strong> {{ society_profile.registration_no}}</p>
             </div>
         </div>
     </div>
@@ -74,10 +74,10 @@
                 <h5 class="card-title">Contact Information</h5>
             </div>
             <div class="card-body">
-                <p><strong>Secretary:</strong> {{ society.secretary_name }}</p>
-                <p><strong>Phone:</strong> {{ society.contact_number }}</p>
-                <p><strong>Email:</strong> {{ society.email }}</p>
-                <p><strong>Website:</strong> <a href="{{ society.website }}" target="_blank">{{ society.website }}</a></p>
+                <p><strong>Secretary:</strong> {{user.full_name }}</p>
+                <p><strong>Phone:</strong> {{ user.phone_number  }}</p>
+                <p><strong>Email:</strong> {{ user.email }}</p>
+                {% comment %} <p><strong>Website:</strong> <a href="{{ society.website }}" target="_blank">{{ society.website }}</a></p> {% endcomment %}
             </div>
         </div>
     </div>

@@ -1,7 +1,7 @@
 from django.http import HttpResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from user.models import Society
-from .forms import Society_profileForm
+
 from .models import Society_profile
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
@@ -10,7 +10,7 @@ from django.views.generic import DetailView
 from .models import Society, Building, Unit
 from django.http import JsonResponse
 from .models import Society_profile, Society
-from .forms import Society_profileForm, BuildingForm, UnitForm, UnitForm
+from .forms import SocietyProfileForm, BuildingForm, UnitForm, UnitForm
 from .models import Building, Unit, UserDetails
 from user.models import User
 
@@ -28,33 +28,34 @@ def soc_profile(request, society_id=None):
     society_profile = Society_profile.objects.filter(society_name=society).first()
     print(f"{society_profile=}")
     if request.method == 'POST':
-        form = Society_profileForm(request.POST, instance=society_profile)
+        form = SocietyProfileForm(request.POST, instance=society_profile)
         if form.is_valid():
             form.save()
     else:
-        form = Society_profileForm(instance=society_profile)
+        form = SocietyProfileForm(instance=society_profile, initial={'society_name_display':society.society_name, 'society_type_display':', '.join([str(t) for t in society.type.all()])})
+
     return render(request, 'society/soc_profile.html', {'socform': form})
+
 
 def society_profile_admin_view(request):
     
        
     society_profile = get_object_or_404(Society_profile, society_name_society_name=request.user.society_name)
     if request.method == 'POST':
-        form = Society_profileForm(request.POST, instance=society_profile)
+        form = SocietyProfileForm(request.POST, instance=society_profile)
         if form.is_valid():
             form.save()
     else:
-        form = Society_profileForm(instance=society_profile)
+        form = SocietyProfileForm(instance=society_profile)
     return render(request, 'society/soc_profile.html', {'socform': form})
 
 
 def add_building_view(request, society_id):
     society = None
     society_profile = None
-
     if request.user.is_superuser:
         society = get_object_or_404(Society, id=society_id)
-        society_profile = get_object_or_404(Society_profile, society_id=society.id)
+        society_profile = get_object_or_404(Society_profile, society_name=society)
     else:
         user = User.objects.get(id=request.user.id)
         society_profile = get_object_or_404(Society_profile, society_name=user.society_name)
@@ -152,6 +153,7 @@ def building_list_view(request, society_id):
 
 def floor_data_view(request, building_id):
     building = get_object_or_404(Building, id=building_id)
+    
     units = Unit.objects.filter(building=building)
     if request.method == 'POST':
         form = UnitForm(request.POST)
@@ -171,7 +173,7 @@ def edit_society_profile(request, society_profile_id):
     
     if request.method == 'POST':
         print("POST data:", request.POST)  # Log POST data for debugging
-        form = Society_profileForm(request.POST, instance=society_profile)
+        form = SocietyProfileForm(request.POST, instance=society_profile)
         if form.is_valid():
             try:
                 form.save()
@@ -190,7 +192,7 @@ def edit_society_profile(request, society_profile_id):
                     
             messages.error(request, "There were errors in the form. Please correct them and try again.")
     else:
-        form = Society_profileForm(instance=society_profile)
+        form = SocietyProfileForm(instance=society_profile)
     
     return render(request, 'society/edit_soc_pro.html', {'form': form})
 

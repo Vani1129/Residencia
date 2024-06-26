@@ -43,7 +43,8 @@ urlpatterns = [
     path('members/create/', views.member_create, name='member_create'),
     path('members/<int:pk>/update/', views.member_update, name='member_update'),
     path('members/<int:pk>/delete/', views.member_delete, name='member_delete'),
-    
+    path('delete_resident/<int:resident_id>/', views.delete_resident, name='delete_resident'),
+
     path('family-members/', views.family_member_list, name='family_member_list'),
     path('family-members/<int:pk>/', views.family_member_detail, name='family_member_detail'),
     path('family-members/create/', views.family_member_create, name='family_member_create'),
@@ -52,9 +53,9 @@ urlpatterns = [
     
     path('society_details/<int:society_id>/subadmin-list/', society_id_subadmin_list, name='society_id_subadmin_list'),
     path('society_details/<int:society_id>/admin_dashboard/', society_id_admin_dashboard, name='society_id_admin_dashboard'),
-    path('floor-data/<int:society_id>/', views.resident_list, name='floor_data'),
+    # path('floor-data/<int:society_id>/', views.resident_list, name='floor_data'),
    
-   
+    # path('floor-data/<int:society_id>/<int:building_id>/', views.resident_list, name='floor_data'),
     # api 
     
 

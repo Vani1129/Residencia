@@ -5,6 +5,7 @@ from user.views import add_resident
 urlpatterns = [
     path('', views.home, name='home'),
     path('create-society-profile/<int:society_id>/', views.soc_profile, name='society_id_soc_profile'),
+    
     path('society-profile-admin/', views.society_profile_admin_view, name='society_id_soc_profile_admin'),
     path('society/<int:society_id>/buildings/', views.building_list_view, name='building_list'),
     path('society/<int:society_id>/add_building/', views.add_building_view, name='add_building'),
@@ -14,6 +15,7 @@ urlpatterns = [
     path('units/add/', views.add_unit, name='add_unit'),
     path('units/edit/<int:unit_id>/', views.edit_unit, name='edit_unit'),
     path('units/delete/<int:unit_id>/', views.delete_unit, name='delete_unit'),
+    # path('floor-data/<int:society_id>/<int:building_id>/', views.resident_list, name='floor_data'),
     # path('floor-data/<int:building_id>/<int:society_id>/', views.floor_data_view ,name='floor_data'),
     path('add_resident/<int:building_id>/<int:society_id>/', add_resident, name='add_resident'),
     # Uncomment these if you want to include them

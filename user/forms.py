@@ -13,6 +13,8 @@ class UserDetailsForm(forms.ModelForm):
         fields = '__all__'
 
 
+
+
 class UserForm(forms.ModelForm):
     society_name_display = forms.CharField(
         label='Society Name',
@@ -24,6 +26,7 @@ class UserForm(forms.ModelForm):
         required=False,
         widget=forms.TextInput(attrs={'class': 'form-control', 'readonly': 'readonly'})
     )
+
     class Meta:
         model = User
         fields = ['full_name', 'email', 'phone_number', 'image']
@@ -32,13 +35,11 @@ class UserForm(forms.ModelForm):
             'email': forms.EmailInput(attrs={'class': 'form-control'}),
             'phone_number': forms.TextInput(attrs={'class': 'form-control'}),
             'image': forms.FileInput(attrs={'class': 'form-control'}),
-            # 'address': forms.TextInput(attrs={'class': 'form-control'}),
         }
 
-    def _init_(self, *args, **kwargs):
-        super()._init_(*args, **kwargs)
-
-  # Initialize the crispy forms helper
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Initialize the crispy forms helper
         self.helper = FormHelper()
         self.helper.form_method = 'post'
         self.helper.layout = Layout(
@@ -57,8 +58,13 @@ class UserForm(forms.ModelForm):
                 Column('image', css_class='form-group col-md-6 mb-3'),
                 css_class='form-row',
             ),
-         
-            Submit('submit', 'Submit', css_class='btn btn-primary')
+            Row(
+                Column(
+                    Submit('submit', 'Submit', css_class='btn btn-primary'),
+                    css_class='form-group col-md-12 mb-3'
+                ),
+                css_class='form-row',
+            )
         )
 
 
@@ -71,6 +77,11 @@ class LoginForm(forms.Form):
     identifier = forms.CharField(max_length=255, required=True)
     otp = forms.CharField(max_length=6, required=True)
 
+from django import forms
+from .models import Society, Type
+from crispy_forms.helper import FormHelper
+from crispy_forms.layout import Layout, Row, Column, Submit, HTML
+from django.urls import reverse_lazy
 
 class SocietyForm(forms.ModelForm):
     society_name = forms.CharField(widget=forms.TextInput(attrs={'class': 'form-control'}))
@@ -79,10 +90,14 @@ class SocietyForm(forms.ModelForm):
         widget=forms.CheckboxSelectMultiple
     )
     is_active = forms.BooleanField(label='Active', required=False)
+    from_date = forms.DateField(widget=forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}))
+    to_date = forms.DateField(widget=forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}), required=False)
+    from_time = forms.TimeField(widget=forms.TimeInput(attrs={'class': 'form-control', 'type': 'time'}))
+    to_time = forms.TimeField(widget=forms.TimeInput(attrs={'class': 'form-control', 'type': 'time'}), required=False)
 
     class Meta:
         model = Society
-        fields = ['society_name', 'type', 'is_active']
+        fields = ['society_name', 'type', 'is_active', 'from_date', 'to_date', 'from_time', 'to_time']
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -103,6 +118,16 @@ class SocietyForm(forms.ModelForm):
                 css_class='form-row',
             ),
             Row(
+                Column('from_date', css_class='form-group col-md-6 mb-3'),
+                Column('to_date', css_class='form-group col-md-6 mb-3'),
+                css_class='form-row',
+            ),
+            Row(
+                Column('from_time', css_class='form-group col-md-6 mb-3'),
+                Column('to_time', css_class='form-group col-md-6 mb-3'),
+                css_class='form-row',
+            ),
+            Row(
                 Column(
                     Submit('submit', 'Submit', css_class='btn btn-primary'),
                     HTML('<a href="%s" class="btn btn-secondary ml-2">Back to Societies List</a>' % reverse_lazy('show_societies')),
@@ -111,7 +136,6 @@ class SocietyForm(forms.ModelForm):
                 css_class='form-row',
             )
         )
-
 
 class SubadminForm(forms.ModelForm):
     name = forms.CharField(max_length=100)
@@ -134,9 +158,12 @@ class MemberForm(forms.ModelForm):
         required=False,
         widget=forms.TextInput(attrs={'class': 'form-control', 'readonly': 'readonly'})
     )
+    building_display= forms.CharField(
+        label='Building Name',
+        required=False,
+        widget=forms.TextInput(attrs={'class': 'form-control', 'readonly': 'readonly'})
+    )
     
-    society_name = forms.CharField(label="Society Name", max_length=100,required=False)
-    building = forms.CharField(label="Building Name", max_length=100,required=False)
     flat_number = forms.CharField(label="Flat Number", max_length=10,required=False)
     full_name = forms.CharField(label="Full Name", max_length=100,required=False)
     date_of_birth = forms.DateField(widget=forms.DateInput(attrs={'type': 'date'}),required=False)
@@ -151,22 +178,20 @@ class MemberForm(forms.ModelForm):
     class Meta:
         model = Member
         fields = (
-            'society_name', 'building', 'flat_number', 'full_name','date_of_birth','gender','email','phone_number','country','address','image','member_type','number_of_members',
+            'society_name_display', 'building_display', 'flat_number', 'full_name','date_of_birth','gender','email','phone_number','country','address','image','member_type','number_of_members',
         )
        
         
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        instance = kwargs.get('instance')
-        if instance and instance.society:
-            self.fields['society_name'].initial = instance.society.society_name.society_name
+       
 
 class FamilyMemberForm(forms.Form):
     family_full_name = forms.CharField(max_length=50, required=False)
     family_date_of_birth = forms.DateField(required=False, widget=forms.DateInput(attrs={'type': 'date'}))
     family_gender = forms.ChoiceField(choices=[('M', 'Male'), ('F', 'Female')], required=False)
     family_phone_number = forms.CharField(max_length=20, required=False)
-    family_type = forms.CharField(max_length=50, required=False)
+    family_relation = forms.CharField(max_length=50, required=False)
 
     def clean(self):
         cleaned_data = super().clean()
