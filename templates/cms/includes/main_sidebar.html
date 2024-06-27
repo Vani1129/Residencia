@@ -62,7 +62,9 @@
                                         <i class="fa fa-angle-right pull-right"></i>
                                     </span>
                                 </a>
+                                
                                 <ul class="treeview-menu">
+                                    
                                     <li><a href="{% url 'society_id_soc_profile' request.resolver_match.kwargs.society_id %}"><i class="icon-Commit"></i>View Profile</a></li>
                                     
                                 </ul>
@@ -164,7 +166,7 @@
 
                     {% if user.is_admin and not user.is_superuser %}
                         <!-- Admin Menu -->
-                        <<li class="treeview">
+                        <li class="treeview">
                             <a href="#">
                                 <i data-feather="user-plus" style="color: black;"></i>
                                 <span style="color: black;">Society Profile</span>
@@ -173,7 +175,12 @@
                                 </span>
                             </a>
                             <ul class="treeview-menu">
+                                {% if request.user.is_superuser %}
                                 <li><a href="{% url 'society_id_soc_profile' request.resolver_match.kwargs.society_id %}"><i class="icon-Commit"></i>View Profile</a></li>
+                                
+                                {% else %}
+                                <li> <a href="{% url 'society_id_soc_profile' request.user.id %}"><i class="icon-Commit"></i>View Profile</a></li>
+                                {% endif %}
                                 
                             </ul>
                         </li>
@@ -187,7 +194,11 @@
                                 </span>
                             </a>
                             <ul class="treeview-menu">
+                                {% if request.user.is_superuser %}
                                 <li><a href="{% url 'society_id_subadmin_list' request.resolver_match.kwargs.society_id %}"><i class="icon-Commit"></i>Committee Member</a></li>
+                                {% else %}
+                                <li><a href="{% url 'society_id_subadmin_list' request.user.id %}"><i class="icon-Commit"></i>Committee Member</a></li>
+                                {% endif %}
                                 <li><a href="{% url 'subadmin_list' %}"><i class="icon-Commit"></i>Gate Keeper</a></li>
                             </ul>
                         </li>
@@ -303,9 +314,15 @@
                             </span>
                         </a>
                         <ul class="treeview-menu">
-                            <li><a href="widgets_blog.html"><i class="icon-Commit"><span class="path1"></span><span class="path2"></span></i>Block List</a></li>
-                            <li><a href="widgets_chart.html"><i class="icon-Commit"><span class="path1"></span><span class="path2"></span></i>Unit List</a></li>
-                            <li><a href="{% url 'floor_data' request.resolver_match.kwargs.society_id %}"><i class="icon-Commit"></i>Resident List</a></li>
+
+                            {% if request.user.is_superuser %}
+                            <li><a href="{% url 'building_list' request.resolver_match.kwargs.society_id %}"><i class="icon-Commit"></i>Block List</a>  </li>
+                            {% else %}
+                            <li><a href="{% url 'building_list' request.user.id %}"><i class="icon-Commit"></i>Block List</a>  </li>
+                            {% endif %}
+                            {% comment %} <li><a href="{% url 'building_list' request.resolver_match.kwargs.society_id %}"><i class="icon-Commit"></i>Block List</a></li> {% endcomment %}
+                            <li><a href="#"><i class="icon-Commit"><span class="path1"></span><span class="path2"></span></i>Unit List</a></li>
+                            {% comment %} <li><a href="{% url 'floor_data' request.resolver_match.kwargs.society_id %}"><i class="icon-Commit"></i>Resident List</a></li> {% endcomment %}
 
                         </ul>
                     </li>

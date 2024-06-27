@@ -10,9 +10,9 @@
         </div>
         <div class="col-md-2 text-right">
             {% if request.user.is_superuser %}
-            <button class="add-button" onclick="window.location.href='{% url 'add_building' request.resolver_match.kwargs.society_id %}'">
+           <h4> <a href="{% url 'add_building' request.resolver_match.kwargs.society_id %}">
                 <i class="fas fa-plus button-icon"></i> Add Building
-            </button>
+            </a></h4>
            
             {% else %}
            <h2> <a href="{% url 'add_building' request.user.id %}">Add Building</a><h2>

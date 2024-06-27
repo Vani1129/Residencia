@@ -54,8 +54,8 @@ class SocietyProfileForm(forms.ModelForm):
                 css_class='form-row',
             ),
             Row(
-                Column('total_numbers', css_class='form-group col-md-6 mb-3'),
-                Column('address', css_class='form-group col-md-6 mb-3'),
+                # Column('total_numbers', css_class='form-group col-md-6 mb-3'),
+                Column('address', css_class='form-group col-md-12 mb-3'),
                 css_class='form-row',
             ),
             Row(

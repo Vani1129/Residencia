@@ -50,14 +50,14 @@
                             </div>
                         </div>
                         
-                        <div class="row">
+                        {% comment %} <div class="row">
                             <div class="col-md-6 mb-3">
                                 {{ form.country|as_crispy_field }}
                             </div>
                             <div class="col-md-6 mb-3">
                                 {{ form.address|as_crispy_field }}
                             </div>
-                        </div>
+                        </div> {% endcomment %}
                         
                         <div class="row">
                             <div class="col-md-6 mb-3">
@@ -70,11 +70,15 @@
                         </div>
                         
                         <div class="row">
-                            <div class="col-md-6 mb-3">
+                            <div class="col-md-8 mb-3">
                                 {{ form.image|as_crispy_field }}
                             </div>
+                        
+                            <div class="col-md-8 mb-3">
+                                <button type="submit" class="btn btn-primary">Save</button>
+                            </div>
                         </div>
-
+                       
                         <h2 class="mt-4">Family Information</h2>
                         <div id="family-members">
                             <div class="family-member">

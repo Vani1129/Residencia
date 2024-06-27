@@ -72,6 +72,8 @@ tr:hover {
     <button class="add-button" onclick="window.location.href='{% url 'register' request.resolver_match.kwargs.society_id%}'">
         <i class="fas fa-plus button-icon"></i> Add Registration
     </button>
+    <!-- Button trigger modal -->
+
     <br><br>
     <div class="table-header">
         <span>Showing {{ users.count }} entries</span>

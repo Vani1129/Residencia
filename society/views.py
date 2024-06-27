@@ -22,20 +22,34 @@ def home(request):
 
 def soc_profile(request, society_id=None):
     print(f"{society_id=}")
-    society = Society.objects.get(id=society_id)
-   
-    
-    society_profile = Society_profile.objects.filter(society_name=society).first()
-    print(f"{society_profile=}")
+    society = None
+    society_profile = None
+
+    if request.user.is_superuser:
+        society = get_object_or_404(Society, id=society_id)
+    elif request.user.is_admin:
+        user = get_object_or_404(User, id=society_id)
+        society = get_object_or_404(Society, society_name=user.society_name)
+    else:
+        return HttpResponseForbidden("You don't have permission to access this page.")
+
+    society_profile, created = Society_profile.objects.get_or_create(society_name=society)
+
     if request.method == 'POST':
         form = SocietyProfileForm(request.POST, instance=society_profile)
         if form.is_valid():
-            form.save()
+            profile = form.save(commit=False)
+            profile.society_name = society  # Ensure the society is set
+            profile.save()
+            return redirect('society_id_soc_profile',society_id=society_id)  # Redirect after successful save
     else:
-        form = SocietyProfileForm(instance=society_profile, initial={'society_name_display':society.society_name, 'society_type_display':', '.join([str(t) for t in society.type.all()])})
+        initial_data = {
+            'society_name_display': society.society_name,
+            'society_type_display': ', '.join([str(t) for t in society.type.all()])
+        }
+        form = SocietyProfileForm(instance=society_profile, initial=initial_data)
 
     return render(request, 'society/soc_profile.html', {'socform': form})
-
 
 def society_profile_admin_view(request):
     
@@ -55,9 +69,11 @@ def add_building_view(request, society_id):
     society_profile = None
     if request.user.is_superuser:
         society = get_object_or_404(Society, id=society_id)
+        print(f"Looking up Society_profile with society_name={society}")
         society_profile = get_object_or_404(Society_profile, society_name=society)
     else:
         user = User.objects.get(id=request.user.id)
+        print(f"{user.society_name=}")
         society_profile = get_object_or_404(Society_profile, society_name=user.society_name)
         society = society_profile.society_name
     

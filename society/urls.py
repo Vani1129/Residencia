@@ -1,6 +1,6 @@
 from django.urls import path
 from . import views
-from user.views import add_resident
+from user.views import add_resident,delete_resident
 
 urlpatterns = [
     path('', views.home, name='home'),
@@ -18,6 +18,8 @@ urlpatterns = [
     # path('floor-data/<int:society_id>/<int:building_id>/', views.resident_list, name='floor_data'),
     # path('floor-data/<int:building_id>/<int:society_id>/', views.floor_data_view ,name='floor_data'),
     path('add_resident/<int:building_id>/<int:society_id>/', add_resident, name='add_resident'),
+    path('delete_resident/<int:resident_id>/', delete_resident, name='delete_resident'),
+    
     # Uncomment these if you want to include them
     # path('user/society_details/<int:society_id>/soc_profile/', views.soc_profile, name='society_id_soc_profile'),
     # path('user/society_details/<int:society_id>/society_profile_list/', views.society_profile_list, name='society_id_society_profile_list'),

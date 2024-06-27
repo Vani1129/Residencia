@@ -141,7 +141,7 @@ class SubadminForm(forms.ModelForm):
     name = forms.CharField(max_length=100)
     phone_no = forms.CharField(max_length=15)
     email = forms.EmailField(required=False)
-    user = forms.ModelChoiceField(queryset=User.objects.all())
+    # user = forms.ModelChoiceField(queryset=User.objects.all())
     class Meta:
         model = UserDetails
         fields = ['name', 'role', 'email', 'phone_no', 'flat_number']
@@ -186,13 +186,19 @@ class MemberForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
        
 
-class FamilyMemberForm(forms.Form):
+class FamilyMemberForm(forms.ModelForm):
     family_full_name = forms.CharField(max_length=50, required=False)
     family_date_of_birth = forms.DateField(required=False, widget=forms.DateInput(attrs={'type': 'date'}))
     family_gender = forms.ChoiceField(choices=[('M', 'Male'), ('F', 'Female')], required=False)
     family_phone_number = forms.CharField(max_length=20, required=False)
     family_relation = forms.CharField(max_length=50, required=False)
 
+
+    class Meta:
+        model = Member
+        fields = (
+            'family_full_name', 'family_date_of_birth', 'family_gender', 'family_relation','family_phone_number',
+        )
     def clean(self):
         cleaned_data = super().clean()
         number_of_members = cleaned_data.get('number_of_members')

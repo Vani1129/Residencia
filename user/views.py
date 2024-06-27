@@ -70,7 +70,7 @@ def resident_list(request, society_id, building_id):
 def add_resident(request, society_id, building_id):
     society = get_object_or_404(Society, id=society_id)
     building = get_object_or_404(Building, id=building_id)
-
+    print(f"{society=}")
     if request.method == 'POST':
         form = MemberForm(request.POST, request.FILES)
         family_form = FamilyMemberForm(request.POST)
@@ -133,18 +133,20 @@ def add_resident(request, society_id, building_id):
 
 
 def delete_resident(request, resident_id):
-    resident = get_object_or_404(Member, id=resident_id)
-    user_id = resident.user.id
-    
+    print("Request method:", request.method)
     if request.method == 'DELETE':
-        # Delete the resident and associated user
-        resident.delete()
-        User.objects.filter(id=user_id).delete()
-        
-        return JsonResponse({'message': 'Resident deleted successfully.'}, status=204)
+        try:
+            resident = get_object_or_404(Member, id=resident_id)
+            user_id = resident.user.id
+            resident.delete()
+            User.objects.filter(id=user_id).delete()
+            return JsonResponse({'message': 'Resident deleted successfully.'}, status=204)
+        except Http404:
+            return JsonResponse({'error': 'Resident not found.'}, status=404)
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=500)
     
     return JsonResponse({'error': 'Method not allowed.'}, status=405)
-
 
 def home(request):
     return HttpResponse("Welcome to the Society Home Page")
@@ -241,9 +243,9 @@ def admin_dashboard(request,society_id):
     # SubadminForm = UserDetails.objects.filter(role='Sub Admin',)
     return render(request, 'registration/admin_dashboard.html', {'users': users, 'society': society})
 
-def society_id_subadmin_list(request, society_id):
-    subadmins = UserDetails.objects.filter(society_sub=society_id, role='committee_member')
-    return render(request, 'registration/subadmin_list.html', {'subadmins': subadmins, 'society_id': society_id})
+# def society_id_subadmin_list(request, society_id):
+#     subadmins = UserDetails.objects.filter(society_sub=society_id, role='committee_member')
+#     return render(request, 'registration/subadmin_list.html', {'subadmins': subadmins, 'society_id': society_id})
 
 
 
@@ -425,14 +427,32 @@ def edit_society(request, id):
 
 User = get_user_model()
 
-def subadmin_list(request):
-    subadmins = UserDetails.objects.filter(society_sub__id=request.user.userdetails.society_sub.id)
-    return render(request, 'subadmin_list.html', {'subadmins': subadmins})
+def subadmin_list(request, society_id):
+    pass
+    # if request.user.is_superuser:
+    #     subadmins = UserDetails.objects.filter(society_sub__id=society_id)
+    # elif request.user.is_admin:
+    #     usr_id = society_id
+    #     user = User.objects.get(id=usr_id)
+    #     print(f"{user.society_name=}")
+        
+    #     subadmins = UserDetails.objects.filter(society_sub__society_name=user.society_name)
+
+    # # subadmins = UserDetails.objects.filter(society_sub__id=request.user.userdetails.society_sub.id)
+    # return render(request, 'subadmin_list.html', {'subadmins': subadmins})
 
 def society_id_subadmin_list(request, society_id=None):
-   
-    subadmins = UserDetails.objects.filter(society_sub__id=society_id)
-    return render(request, 'subadmin_list.html', {'subadmins': subadmins, 'society_id': society_id})
+    print(f"{request.user=}")
+    
+    if request.user.is_superuser:
+        subadmins = UserDetails.objects.filter(society_sub__id=society_id)
+    else:
+        usr_id = society_id
+        user = User.objects.get(id=usr_id)
+        subadmins = UserDetails.objects.filter(society_sub__society_name=user.society_name)
+        
+        
+    return render(request, 'registration/subadmin_list.html', {'subadmins': subadmins, 'society_id': society_id})
 
 
 
@@ -457,7 +477,13 @@ def society_id_add_subadmin(request, society_id):
                     email=email,
                     is_admin=False
                 )
-                society = Society.objects.filter(id=society_id).first()
+                society=None
+                if request.user.is_superuser:
+                    society = Society.objects.filter(id=society_id).first()
+                else:
+                    use = User.objects.get(id=society_id)
+                    society = Society.objects.filter(society_name=use.society_name).first()
+                    
                 user_details = UserDetails.objects.create(
                     user=user,
                     role='committee_member',  # Assuming 'committee_member' is the role for subadmins
@@ -534,9 +560,6 @@ def delete_subadmin(request, subadmin_id):
         return JsonResponse({'message': 'Subadmin deleted successfully'})
     return JsonResponse({'error': 'Invalid request method'}, status=400)
 
-def society_id_subadmin_list(request, society_id):
-    subadmins = UserDetails.objects.filter(society_sub=society_id)
-    return render(request, 'registration/subadmin_list.html', {'subadmins': subadmins})
 
 
 def edit_subadmin(request, pk):
@@ -635,9 +658,7 @@ def society_details(request, society_id):
         'society_profile': society_profile,
     })
 
-def society_id_subadmin_list(request,society_id):
-    subadmins = UserDetails.objects.filter(society_sub=society_id)
-    return render(request, 'registration/subadmin_list.html', {'subadmins': subadmins})
+
 
 @user_passes_test(lambda u: u.is_superuser)
 def society_id_admin_dashboard(request,society_id):
@@ -793,7 +814,7 @@ def api_verify_otp(request):
             # Determine user role
             if user.is_superuser:
                 user_role = "Super Admin"
-            elif user.is_staff:
+            elif user.is_admin:
                 user_role = "Admin"
             elif user_details and user_details.role == 'committee_member':
                 user_role = "Subadmin"
@@ -820,22 +841,18 @@ def api_verify_otp(request):
 
 
 @api_view(['GET', 'POST'])
-@permission_classes([IsAuthenticated])
+@permission_classes([IsAuthenticated,])
 def api_member_profile(request):
-    """
-    API endpoint to retrieve or update member details after OTP verification.
-    """
     user = request.user
 
     if request.method == 'GET':
         try:
-            member = Member.objects.get(user=user)
-            print(f"{member=}")
-            #Serialize member details including family members
+            member = Member.objects.filter(user=user).first()
+            if not member:
+                return Response({'error': 'Member details not found.'}, status=404)
+
             member_serializer = MemberProfileSerializer(member)
             member_data = member_serializer.data
-            # print( member_serializer.data)
-
             return Response({'member': member_data})
 
         except Member.DoesNotExist:
@@ -843,11 +860,9 @@ def api_member_profile(request):
 
     elif request.method == 'POST':
         try:
-            member = Member.objects.get(user=user)
+            member = Member.objects.filter(user=user).first()
         except Member.DoesNotExist:
             member = None
-
-        print(request.data)
 
         member_serializer = MemberCreateUpdateSerializer(data=request.data)
         if member_serializer.is_valid():
@@ -859,7 +874,6 @@ def api_member_profile(request):
             return Response({'message': 'Member details saved successfully.'})
 
         return Response(member_serializer.errors, status=400)
-    
 # @api_view(['GET', 'POST'])
 # @permission_classes([IsAuthenticated])
 # def member_list(request):

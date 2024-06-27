@@ -72,6 +72,8 @@
         <i class="fas fa-plus button-icon"></i> Add Resident
     </button>
     
+
+    
     <br><br>
     <div class="table-header">
         <span>Showing {{ residents.count }} entries</span>
@@ -103,7 +105,7 @@
                 <td>
                     
                     <a href="#" class="edit-button"><i class="fas fa-pencil-alt button-icon"></i></a>
-                    <button class="delete-button" onclick="deleteResident('{{ resident.id }}')">
+                    <button class="delete-button" onclick="deleteResident({{ resident.id }})">
                         <i class="fas fa-times button-icon"></i>
                     </button>
                 </td>
@@ -112,38 +114,42 @@
         </tbody>
     </table>
 
-    <script>
-        function deleteResident(residentId) {
-            if (confirm("Are you sure you want to delete this resident?")) {
-                fetch(`/delete_resident/${residentId}/`, {
-                    method: 'DELETE',
-                    headers: {
-                        'X-CSRFToken': '{{ csrf_token }}',
-                        'Content-Type': 'application/json',
-                    }
-                }).then(response => {
-                    if (response.ok) {
-                        document.getElementById(`resident-row-${residentId}`).remove();
-                        window.location.href = '/floor_list/{{ building_id }}/';
-                    }
-                });
+
+<script>
+function deleteResident(residentId) {
+    fetch(`/delete_resident/${residentId}/`, {
+        method: 'DELETE',
+        headers: {
+            'X-CSRFToken': getCookie('csrftoken'), // Include CSRF token if needed
+        }
+    })
+    .then(response => {
+        if (response.status === 204) {
+            alert('Resident deleted successfully.');
+            window.location.reload(); // Reload the page or redirect as needed
+        } else {
+            response.json().then(data => alert(data.error));
+        }
+    })
+    .catch(error => console.error('Error:', error));
+}
+
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            // Does this cookie string begin with the name we want?
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
             }
         }
-
-        function filterTable() {
-            const searchInput = document.getElementById('searchInput').value.toLowerCase();
-            const tableRows = document.getElementById('tableBody').getElementsByTagName('tr');
-
-            for (let i = 0; i < tableRows.length; i++) {
-                const rowData = tableRows[i].textContent.toLowerCase();
-                if (rowData.includes(searchInput)) {
-                    tableRows[i].style.display = '';
-                } else {
-                    tableRows[i].style.display = 'none';
-                }
-            }
-        }
-    </script>
+    }
+    return cookieValue;
+}
+</script>
 </body>
 </html>
 {% endblock %}
