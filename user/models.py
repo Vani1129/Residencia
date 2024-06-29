@@ -65,14 +65,12 @@ from django.db import models
 from django.utils import timezone
 
 class Society(models.Model):
-    society_name = models.CharField(max_length=255)
+    society_name = models.CharField(max_length=255, unique=True)
     type = models.ManyToManyField(Type, related_name="society_type")
-    is_active = models.BooleanField()
-    from_date = models.DateField(default=timezone.now)
+    # is_active = models.BooleanField()
+    from_date = models.DateField(default=timezone.now, null=True, blank=True)
     to_date = models.DateField(null=True, blank=True)
-    from_time = models.TimeField(default=timezone.now)
-    to_time = models.TimeField(null=True, blank=True)
-
+   
     def __str__(self):
         return self.society_name
 
@@ -81,7 +79,7 @@ class UserDetails(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="userdetails")
     # name = models.CharField(max_length=100)
     role = models.CharField(max_length=50, choices=(
-        ('resident', 'Resident'),
+        # ('resident', 'Resident'),
         ('committee_member', 'Committee Member'),
     ))
     flat_number = models.CharField(max_length=20)
@@ -118,13 +116,14 @@ class Member(models.Model):
     member_type = models.CharField(max_length=50, null=True, blank=True)
     
     def __str__(self):
-        return f"Member: {self.user.full_name} ({self.user.email})"
+        return f"Member: {self.user}"
 
 class FamilyMember(models.Model):
     GENDER_CHOICES = [
         ('M', 'Male'),
         ('F', 'Female'),
     ]
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='family_members_user', null=True, blank=True)
     member = models.ForeignKey(Member, on_delete=models.CASCADE, related_name='family_members')
     full_name = models.CharField(max_length=50,null=True, blank=True)
     date_of_birth = models.DateField(null=True, blank=True)
@@ -133,7 +132,8 @@ class FamilyMember(models.Model):
     family_relation = models.CharField(max_length=50,null=True, blank=True)
 
     def __str__(self):
-        return f"Family Member: {self.full_name} of {self.member.full_name}"
+         return f"Family Member: {self.user.full_name} of {self.member.user.full_name}"
+    
     
     
 

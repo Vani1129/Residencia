@@ -42,7 +42,7 @@ class Staff(models.Model):
     
 class Building(models.Model):
     society = models.ForeignKey(Society_profile, on_delete=models.CASCADE, related_name='buildings')
-    name = models.CharField(max_length=50, null=True, blank=True)
+    name = models.CharField(max_length=50,unique=True)
     created_at = models.DateTimeField(auto_now_add=True, null=True, blank=True)
     updated_at = models.DateTimeField(auto_now=True, null=True, blank=True)
 

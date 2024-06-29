@@ -18,10 +18,10 @@ admin.site.register(UserDetails)
 
 @admin.register(Society)
 class SocietyAdmin(admin.ModelAdmin):
-    list_display = ('id', 'society_name','is_active')
-    list_filter = ('is_active',)
+    list_display = ('id', 'society_name')
+    # list_filter = ('is_active',)
     search_fields = ('society_name',)
-    actions = ['make_active', 'make_inactive']
+    # actions = ['make_active', 'make_inactive']
 
     def make_active(self, request, queryset):
         queryset.update(is_active=True)
@@ -40,7 +40,7 @@ class CustomUserAdmin(BaseUserAdmin):
     list_display_links = ('email',)
     fieldsets = (
         (None, {'fields': ('email', 'password', 'full_name', 'phone_number', 'image', 'address', 'society_name', 'type')}),
-        ('Permissions', {'fields': ('is_active', 'is_staff', 'is_superuser')}),
+        ('Permissions', {'fields': ( 'is_staff', 'is_superuser')}),
         ('Important dates', {'fields': ('last_login',)}),
     )
     filter_horizontal = ()

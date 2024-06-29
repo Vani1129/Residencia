@@ -64,6 +64,23 @@ def society_profile_admin_view(request):
     return render(request, 'society/soc_profile.html', {'socform': form})
 
 
+def building_list_view(request, society_id):
+    society = None
+    if request.user.is_superuser:
+        society = get_object_or_404(Society, id=society_id)
+    else:
+        user = User.objects.get(id=society_id)
+        print(f"{user=}")
+        print(f"{user.society_name=}")
+        
+        society = Society.objects.filter(society_name=user.society_name).first()
+        print(f"{society=}")
+        
+    buildings = Building.objects.filter(society__society_name=society)
+    # print(f"{buildings=}")
+    return render(request, 'building/building_list.html', {'buildings': buildings, 'society': society})
+
+
 def add_building_view(request, society_id):
     society = None
     society_profile = None
@@ -74,7 +91,7 @@ def add_building_view(request, society_id):
     else:
         user = User.objects.get(id=request.user.id)
         print(f"{user.society_name=}")
-        society_profile = get_object_or_404(Society_profile, society_name=user.society_name)
+        society_profile = get_object_or_404(Society_profile, society_name__society_name=user.society_name)
         society = society_profile.society_name
     
     if request.method == 'POST':
@@ -83,7 +100,9 @@ def add_building_view(request, society_id):
             building = form.save(commit=False)
             building.society = society_profile  # Assign the society_profile instance here
             building.save()
-            return redirect('building_list', society_id=society.id)
+            print(f"{society_id=}")
+            return redirect('building_list', society_id=society.id if request.user.is_superuser else request.user.id)
+            
     else:
         form = BuildingForm(initial={'society_name_display': society.society_name})
     
@@ -149,38 +168,6 @@ def unit_list(request, building_id):
             return redirect('unit_list', building_id=building.id)
     return render(request, 'building/unit_list.html', {'building': building, 'units': units, 'form': form})
 
-
-
-def building_list_view(request, society_id):
-    society = None
-    if request.user.is_superuser:
-        society = get_object_or_404(Society, id=society_id)
-    else:
-        user = User.objects.get(id=society_id)
-        print(f"{user=}")
-        print(f"{user.society_name=}")
-        
-        society = Society.objects.filter(society_name=user.society_name).first()
-        print(f"{society=}")
-        
-    buildings = Building.objects.filter(society__society_name=society)
-    print(f"{buildings=}")
-    return render(request, 'building/building_list.html', {'buildings': buildings, 'society': society})
-
-def floor_data_view(request, building_id):
-    building = get_object_or_404(Building, id=building_id)
-    
-    units = Unit.objects.filter(building=building)
-    if request.method == 'POST':
-        form = UnitForm(request.POST)
-        if form.is_valid():
-            unit = form.save(commit=False)
-            unit.building = building
-            unit.save()
-            return redirect('floor_data', building_id=building.id)
-    else:
-        form = UnitForm()
-    return render(request, 'building/floor_data.html', {'building': building, 'units': units, 'form': form})
 
 
 @login_required
@@ -267,3 +254,19 @@ def floor_data_view(request, building_id):
     }
 
     return render(request, 'building/floor_data.html', context)
+
+
+# def floor_data_view(request, building_id):
+#     building = get_object_or_404(Building, id=building_id)
+    
+#     units = Unit.objects.filter(building=building)
+#     if request.method == 'POST':
+#         form = UnitForm(request.POST)
+#         if form.is_valid():
+#             unit = form.save(commit=False)
+#             unit.building = building
+#             unit.save()
+#             return redirect('floor_data', building_id=building.id)
+#     else:
+#         form = UnitForm()
+#     return render(request, 'building/floor_data.html', {'building': building, 'units': units, 'form': form})

@@ -40,7 +40,7 @@ class CreateFamilyMemberSerializer(serializers.ModelSerializer):
 
 
 class MemberProfileSerializer(serializers.ModelSerializer):
-    # user = UserSerializer(read_only=True)
+    user = UserSerializer(read_only=True)
     family_members = FamilyMemberSerializer(many=True, read_only=True)
 
     class Meta:

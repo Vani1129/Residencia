@@ -89,15 +89,13 @@ class SocietyForm(forms.ModelForm):
         queryset=Type.objects.all(),
         widget=forms.CheckboxSelectMultiple
     )
-    is_active = forms.BooleanField(label='Active', required=False)
+    # is_active = forms.BooleanField(label='Active', required=False)
     from_date = forms.DateField(widget=forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}))
     to_date = forms.DateField(widget=forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}), required=False)
-    from_time = forms.TimeField(widget=forms.TimeInput(attrs={'class': 'form-control', 'type': 'time'}))
-    to_time = forms.TimeField(widget=forms.TimeInput(attrs={'class': 'form-control', 'type': 'time'}), required=False)
-
+    
     class Meta:
         model = Society
-        fields = ['society_name', 'type', 'is_active', 'from_date', 'to_date', 'from_time', 'to_time']
+        fields = ['society_name', 'type',  'from_date', 'to_date']
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -114,17 +112,8 @@ class SocietyForm(forms.ModelForm):
                 css_class='form-row',
             ),
             Row(
-                Column('is_active', css_class='form-group col-md-6 mb-3'),
-                css_class='form-row',
-            ),
-            Row(
                 Column('from_date', css_class='form-group col-md-6 mb-3'),
                 Column('to_date', css_class='form-group col-md-6 mb-3'),
-                css_class='form-row',
-            ),
-            Row(
-                Column('from_time', css_class='form-group col-md-6 mb-3'),
-                Column('to_time', css_class='form-group col-md-6 mb-3'),
                 css_class='form-row',
             ),
             Row(

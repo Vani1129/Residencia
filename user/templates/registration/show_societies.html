@@ -110,7 +110,7 @@
                 <th>ID</th>
                 <th>Society Name</th>
                 <th>Type</th>
-                <th>Status</th>
+                {% comment %} <th>Status</th> {% endcomment %}
                 <th>Actions</th>
             </tr>
         </thead>
@@ -126,9 +126,9 @@
                         {% endfor %}
                     </ul>
                 </td>
-                <td style="color: {% if society.is_active %}green{% else %}red{% endif %};">
+                {% comment %} <td style="color: {% if society.is_active %}green{% else %}red{% endif %};">
                     {% if society.is_active %}Active{% else %}Inactive{% endif %}
-                </td>
+                </td> {% endcomment %}
                 <td>
                     <a href="{% url 'edit_society' society.id %}" class="edit-button">
                         <i class="fas fa-pencil-alt button-icon"></i>
@@ -162,7 +162,7 @@
                         <p><strong>ID:</strong> ${data.id}</p>
                         <p><strong>Name:</strong> ${data.society_name}</p>
                         <p><strong>Type:</strong> ${data.type}</p>
-                        <p><strong>Status:</strong> ${data.is_active ? 'Active' : 'Inactive'}</p>
+                        {% comment %} <p><strong>Status:</strong> ${data.is_active ? 'Active' : 'Inactive'}</p> {% endcomment %}
                     `;
                     sidebar.style.display = 'block';
                 })

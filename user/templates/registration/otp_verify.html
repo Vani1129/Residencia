@@ -15,7 +15,7 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            background-color: #f0f0f0;
+            background-color: #cacaca;
         }
         .container {
             width: 100%;
@@ -67,7 +67,7 @@
         <form class="otp-form" method="post" action="{% url 'otp_verify' %}">
             {% csrf_token %}
             {{ form.as_p }}
-            <input type="submit" value="Verify OTP">
+            <input type="submit" value="Login">
         </form>
         <br>
         {% if messages %}

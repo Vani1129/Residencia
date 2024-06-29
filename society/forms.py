@@ -4,6 +4,8 @@ from .models import Society_profile
 from .models import Building, Unit
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Layout, Submit, Row, Column
+from django.core.exceptions import ValidationError
+
 
 class SocietyProfileForm(forms.ModelForm):
     society_name_display = forms.CharField(
@@ -59,18 +61,19 @@ class SocietyProfileForm(forms.ModelForm):
                 css_class='form-row',
             ),
             Row(
-                Column('pan_no', css_class='form-group col-md-6 mb-3'),
-                Column('gst_no', css_class='form-group col-md-6 mb-3'),
-                css_class='form-row',
-            ),
-            Row(
-                Column('registration_no', css_class='form-group col-md-6 mb-3'),
-                Column('city', css_class='form-group col-md-6 mb-3'),
-                css_class='form-row',
-            ),
-            Row(
                 Column('state', css_class='form-group col-md-6 mb-3'),
                 Column('zip_code', css_class='form-group col-md-6 mb-3'),
+                css_class='form-row',
+            ),
+            Row(
+                Column('city', css_class='form-group col-md-6 mb-3'),
+                Column('registration_no', css_class='form-group col-md-6 mb-3'),
+                css_class='form-row',
+            ),
+            
+             Row(
+                Column('pan_no', css_class='form-group col-md-6 mb-3'),
+                Column('gst_no', css_class='form-group col-md-6 mb-3'),
                 css_class='form-row',
             ),
             Submit('submit', 'Submit', css_class='btn btn-primary')
@@ -113,13 +116,20 @@ class BuildingForm(forms.ModelForm):
         widgets = {
             'name': forms.TextInput(attrs={'class': 'form-control'}),
         }
-
+    
     def __init__(self, *args, **kwargs):
         instance = kwargs.get('instance')
         super(BuildingForm, self).__init__(*args, **kwargs)
         if instance and instance.society:
             self.fields['society_name_display'].initial = instance.society.society.society_name
 
+    def clean_name(self):
+        name = self.cleaned_data.get('name')
+        if Building.objects.filter(name=name).exists():
+            raise ValidationError("Building with this Name already exists.", code='unique')
+        return name
+    
+    
 
 class UnitForm(forms.ModelForm):
     building_name_display = forms.CharField(

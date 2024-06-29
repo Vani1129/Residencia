@@ -68,12 +68,37 @@ def resident_list(request, society_id, building_id):
 
 
 def add_resident(request, society_id, building_id):
-    society = get_object_or_404(Society, id=society_id)
-    building = get_object_or_404(Building, id=building_id)
-    print(f"{society=}")
+    society = None
+    building = None
+    
+    # Debug: Check if user is superuser
+    print(f"User is superuser: {request.user.is_superuser}")
+    
+    if request.user.is_superuser:
+        society = get_object_or_404(Society, id=society_id)
+        building = get_object_or_404(Building, id=building_id)
+    else:
+        usr_id = society_id
+        user = User.objects.get(id=usr_id)
+        
+        # Debug: Check retrieved user details
+        print(f"Retrieved user: {user}")
+        
+        society = get_object_or_404(Society, society_name=user.society_name)
+        building = get_object_or_404(Building, id=building_id)
+    
+    # Debug: Check society and building details
+    print(f"Society: {society}")
+    print(f"Building: {building}")
+    
     if request.method == 'POST':
         form = MemberForm(request.POST, request.FILES)
         family_form = FamilyMemberForm(request.POST)
+        
+        # Debug: Check form validity
+        print(f"Form is valid: {form.is_valid()}")
+        print(f"Family form is valid: {family_form.is_valid()}")
+        
         if form.is_valid() and family_form.is_valid():
             name = form.cleaned_data.get('full_name')
             phone = form.cleaned_data.get('phone_number')
@@ -84,10 +109,17 @@ def add_resident(request, society_id, building_id):
             gender = form.cleaned_data.get('gender')
             country = form.cleaned_data.get('country')
             member_type = form.cleaned_data.get('member_type')
-
+            
+            # Debug: Check cleaned form data
+            print(f"Name: {name}, Phone: {phone}, Email: {email}, Flat Number: {flat_number}")
+            
             user_exist_by_phone = User.objects.filter(phone_number=phone).first()
             user_exist_by_email = User.objects.filter(email=email).first()
-
+            
+            # Debug: Check if user already exists
+            print(f"User exists by phone: {user_exist_by_phone}")
+            print(f"User exists by email: {user_exist_by_email}")
+            
             if not user_exist_by_phone and not user_exist_by_email:
                 user = User.objects.create(
                     full_name=name,
@@ -95,6 +127,10 @@ def add_resident(request, society_id, building_id):
                     email=email,
                     is_admin=False
                 )
+                
+                # Debug: Check created user
+                print(f"Created user: {user}")
+                
                 member = Member.objects.create(
                     society=society,
                     user=user,
@@ -105,29 +141,55 @@ def add_resident(request, society_id, building_id):
                     country=country,
                     member_type=member_type
                 )
-
+                
                 number_of_members = form.cleaned_data.get('number_of_members', 1)
+                
+                # Debug: Check number of family members
+                print(f"Number of members: {number_of_members}")
+                print(f"Number of members: {member}")
+                
                 if number_of_members is not None:
                     for _ in range(number_of_members):
-                        family_instance = family_form.save(commit=False)
-                        family_instance.member = member
-                        family_instance.save()
-
+                        user_fm= User.objects.create(
+                            full_name=form.cleaned_data.get('family_full_name'),
+                            phone_number=form.cleaned_data.get('family_phone_number'),
+                           
+                            is_admin=False
+                        )
+                        print(f"{user_fm=}")
+                        family_instance = FamilyMember.objects.create(
+                            user = user_fm,
+                            member = member,
+                            full_name = form.cleaned_data.get('family_full_name'),
+                            date_of_birth = form.cleaned_data.get('date_of_birth'),
+                            gender = form.cleaned_data.get('gender'),
+                            phone_number = form.cleaned_data.get('family_phone_number'),
+                            family_relation = form.cleaned_data.get('family_relation')
+                        )
+                        print(f"Created family member: {family_instance}")
+                        
+                        # Debug: Check created family member
+                
                 return redirect('floor_data', building_id=building.id, society_id=society.id)
             else:
                 if user_exist_by_phone:
                     form.add_error('phone_number', "User with this phone number already exists.")
                 if user_exist_by_email:
                     form.add_error('email', "User with this email already exists.")
+        else:
+            # Debug: Invalid form data
+            print("Form or Family form is invalid")
     else:
-        form = MemberForm(initial={'society_name_display': society.society_name,'building_display':building.name})
-        
+        form = MemberForm(initial={'society_name_display': society.society_name, 'building_display': building.name})
         family_form = FamilyMemberForm()
-
+    
     context = {
         'form': form,
         'family_form': family_form,
     }
+    
+    # Debug: Render context data
+    print(f"Rendering context: {context}")
     return render(request, 'building/add_resident.html', context)
 
 
@@ -307,15 +369,10 @@ def otp_page(request):
 def otp_verify(request):
     if request.method == 'POST':
         form = OTPForm(request.POST)
-        print(f"{form.errors=}")
         if form.is_valid():
             otp_entered = form.cleaned_data['otp']
             phone_number = form.cleaned_data['phone_number']
             stored_otp = request.session.get('otp')
-
-              # Debugging prints
-            print(f"Stored OTP: {stored_otp}")
-            print(f"Stored Phone Number: {phone_number}")
 
             if otp_entered == stored_otp and phone_number:
                 UserModel = get_user_model()
@@ -329,13 +386,17 @@ def otp_verify(request):
             else:
                 messages.error(request, 'Invalid OTP. Please try again.')
         else:
-            print(form.errors)
             messages.error(request, 'Invalid form submission. Please try again.')
     else:
-        form = OTPForm(initial={'phone_number': request.session.get('phone_number')})
+        # Pre-fill the phone number field if available in session
+        phone_number = request.session.get('phone_number')
+        form = OTPForm(initial={'phone_number': phone_number})
 
+    # Make phone_number field read-only in the form
+    form.fields['phone_number'].widget.attrs['readonly'] = True
 
     return render(request, 'registration/otp_verify.html', {'form': form})
+
 
 
 
@@ -378,11 +439,10 @@ def add_society(request):
             
             society = Society.objects.create(
                 society_name=form.cleaned_data["society_name"],
-                is_active=form.cleaned_data.get("is_active", False),  # Use get() with a default value
+                # is_active=form.cleaned_data.get("is_active", False),  # Use get() with a default value
                 from_date=form.cleaned_data["from_date"],
                 to_date=form.cleaned_data.get("to_date"),
-                from_time=form.cleaned_data["from_time"],
-                to_time=form.cleaned_data.get("to_time")
+               
             )
             
             for type_obj in types:
@@ -471,18 +531,21 @@ def society_id_add_subadmin(request, society_id):
             user_exist_by_email = User.objects.filter(email=email).first()
 
             if not user_exist_by_phone and not user_exist_by_email:
-                user = User.objects.create_user(
-                    full_name=name,
-                    phone_number=phone,
-                    email=email,
-                    is_admin=False
-                )
                 society=None
                 if request.user.is_superuser:
                     society = Society.objects.filter(id=society_id).first()
                 else:
                     use = User.objects.get(id=society_id)
                     society = Society.objects.filter(society_name=use.society_name).first()
+                user = User.objects.create_user(
+                    full_name=name,
+                    phone_number=phone,
+                    email=email,
+                    is_admin=False
+                )
+                user.society_name=society.society_name
+                user.save()
+
                     
                 user_details = UserDetails.objects.create(
                     user=user,

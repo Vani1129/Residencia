@@ -2,15 +2,33 @@
 {% load crispy_forms_tags %}
 {% load static %}
 
-
 {% block content %}
 <div class="container mt-5">
     <h2>Add Building for {{ society.society_name }}</h2>
     <form method="post">
         {% csrf_token %}
-        {{ form.as_p }}
+        {% for field in form %}
+            <div class="form-group">
+                {{ field|as_crispy_field }}
+                {% if field.errors %}
+                    <span class="error-message">{{ field.errors.0 }}</span>
+                {% endif %}
+            </div>
+        {% endfor %}
         <button type="submit" class="btn btn-primary">Add Building</button>
     </form>
 </div>
-{% endblock %}
 
+<style>
+    .error-message {
+        color: red;
+        
+        display: block;
+        margin-top: 5px;
+    }
+    /* Override crispy-forms error styles to prevent duplication */
+    .invalid-feedback {
+        display: none !important;
+    }
+</style>
+{% endblock %}
