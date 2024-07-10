@@ -900,108 +900,47 @@ def api_verify_otp(request):
         return JsonResponse({'success': False, 'message': 'Invalid OTP. Please try again.'}, status=400)
     
 
-
-@api_view(['GET', 'POST'])
-@permission_classes([IsAuthenticated,])
+@api_view(['GET', 'POST', 'PUT'])
+@permission_classes([IsAuthenticated])
 def api_member_profile(request):
     user = request.user
 
     if request.method == 'GET':
         try:
-            member = Member.objects.filter(user=user).first()
-            if not member:
-                return Response({'error': 'Member details not found.'}, status=404)
-
+            member = Member.objects.get(user=user)
             member_serializer = MemberProfileSerializer(member)
-            member_data = member_serializer.data
-            return Response({'member': member_data})
-
+            return Response({'member': member_serializer.data})
         except Member.DoesNotExist:
-            return Response({'error': 'Member details not found.'}, status=404)
+            return Response({'error': 'Member details not found.'}, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({'error': 'Error retrieving member details.'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     elif request.method == 'POST':
-        try:
-            member = Member.objects.filter(user=user).first()
-        except Member.DoesNotExist:
-            member = None
-
         member_serializer = MemberCreateUpdateSerializer(data=request.data)
+        
         if member_serializer.is_valid():
-            if member:
-                member_serializer.update(member, member_serializer.validated_data)
-            else:
+            try:
                 member_serializer.save(user=user)
+                return Response({'message': 'Member details saved successfully.'})
+            except Exception as e:
+                return Response({'error': 'Error saving member details.'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+        return Response(member_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-            return Response({'message': 'Member details saved successfully.'})
+    elif request.method == 'PUT':
+        try:
+            member = Member.objects.get(user=user)
+            member_serializer = MemberCreateUpdateSerializer(member, data=request.data, partial=True)
+            
+            if member_serializer.is_valid():
+                member_serializer.save()
+                return Response({'message': 'Member details updated successfully.'})
+            else:
+                return Response(member_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        
+        except Member.DoesNotExist:
+            return Response({'error': 'Member details not found.'}, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({'error': 'Error updating member details.'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-        return Response(member_serializer.errors, status=400)
-# @api_view(['GET', 'POST'])
-# @permission_classes([IsAuthenticated])
-# def member_list(request):
-#     if request.method == 'GET':
-#         members = Member.objects.filter(user=request.user)
-#         serializer = MemberSerializer(members, many=True)
-#         return Response(serializer.data)
-
-#     elif request.method == 'POST':
-#         serializer = MemberSerializer(data=request.data)
-#         if serializer.is_valid():
-#             serializer.save(user=request.user)
-#             return Response(serializer.data, status=status.HTTP_201_CREATED)
-#         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-# @api_view(['GET', 'PUT', 'DELETE'])
-# @permission_classes([IsAuthenticated])
-# def member_detail(request, pk):
-#     member = get_object_or_404(Member, pk=pk, user=request.user)
-
-#     if request.method == 'GET':
-#         serializer = MemberSerializer(member)
-#         return Response(serializer.data)
-
-#     elif request.method == 'PUT':
-#         serializer = MemberSerializer(member, data=request.data, partial=True)
-#         if serializer.is_valid():
-#             serializer.save()
-#             return Response(serializer.data)
-#         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-#     elif request.method == 'DELETE':
-#         member.delete()
-#         return Response(status=status.HTTP_204_NO_CONTENT)
-
-# @api_view(['GET', 'POST'])
-# @permission_classes([IsAuthenticated])
-# def family_member_list(request):
-#     if request.method == 'GET':
-#         family_members = FamilyMember.objects.filter(member__user=request.user)
-#         serializer = FamilyMemberSerializer(family_members, many=True)
-#         return Response(serializer.data)
-
-#     elif request.method == 'POST':
-#         serializer = FamilyMemberSerializer(data=request.data)
-#         if serializer.is_valid():
-#             member = get_object_or_404(Member, id=request.data.get('member'), user=request.user)
-#             serializer.save(member=member)
-#             return Response(serializer.data, status=status.HTTP_201_CREATED)
-#         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-# @api_view(['GET', 'PUT', 'DELETE'])
-# @permission_classes([IsAuthenticated])
-# def family_member_detail(request, pk):
-#     family_member = get_object_or_404(FamilyMember, pk=pk, member__user=request.user)
-
-#     if request.method == 'GET':
-#         serializer = FamilyMemberSerializer(family_member)
-#         return Response(serializer.data)
-
-#     elif request.method == 'PUT':
-#         serializer = FamilyMemberSerializer(family_member, data=request.data, partial=True)
-#         if serializer.is_valid():
-#             serializer.save()
-#             return Response(serializer.data)
-#         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-#     elif request.method == 'DELETE':
-#         family_member.delete()
-#         return Response(status=status.HTTP_204_NO_CONTENT)
+    return Response({'error': 'Method not allowed.'}, status=status.HTTP_405_METHOD_NOT_ALLOWED)

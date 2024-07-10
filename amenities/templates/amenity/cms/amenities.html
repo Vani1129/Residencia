@@ -26,7 +26,6 @@
             <div class="box">
                 <div class="box-body">
                     <div class="table-responsive">
-                        <input type="text" id="searchInput" onkeyup="filterTable()" placeholder="Search...">
                         <table id="example1" class="table table-hover">
                             <thead>
                                 <tr>
@@ -45,17 +44,17 @@
                                     <td>{{ amenity.title }}</td>
                                     <td>{{ amenity.description }}</td>
                                     <td>{{ amenity.rule_description }}</td>
-                                    <td>
-                                        {% if amenity.image %}
-                                        <img src="{{ amenity.image.url }}" alt="{{ amenity.title }}" style="width: 50px; height: auto;">
-                                        {% else %}
-                                        No image
-                                        {% endif %}
-                                    </td>
-                                    <td style="display: flex;">
+                                    <td >
+                                      {% if amenity.image %}
+                                          <img src="{{ amenity.image.url }}" alt="{{ amenity.title }}" style="width: 50px; height: auto;">
+                                      {% else %}
+                                      <img src="{% static 'images/amenities.jpg' %}" alt="Default Profile Image" style="width: 55px; height: 55px; object-fit: cover; border-radius: 50%;">
+                                      {% endif %}
+                                  </td>
+                                  <td style="display: flex;">
                                         <button onclick="window.location.href='{% url 'edit_amenity' pk=amenity.pk id=request.resolver_match.kwargs.id %}'" class="waves-effect waves-light btn mr-2 bg-gradient-primary"><i class="fa fa-edit"></i></button>
                                         <button onclick="deleteAmenity({{ amenity.pk }})" class="waves-effect waves-light btn bg-gradient-danger"><i class="fa fa-trash"></i></button>
-                                    </td>
+                                  </td>
                                 </tr>
                                 {% endfor %}
                             </tbody>

@@ -27,7 +27,6 @@ urlpatterns = [
     path('society/edit/<int:id>/', edit_society, name='edit_society'),
     path('society_details/<int:id>/add_subadmin/', id_add_subadmin, name='id_add_subadmin'),
   
-    # path('subadmin_list/<int:id>/', views.id_subadmin_list, name='id_subadmin_list'),
     path('subadmin/<int:pk>/edit/', edit_subadmin, name='edit_subadmin'),
     path('edit_user/<int:user_id>/', edit_user, name='edit_user'),
 
@@ -55,11 +54,8 @@ urlpatterns = [
     
     path('society_details/<int:id>/subadmin_list/', views.id_subadmin_list, name='id_subadmin_list'),
     path('society_details/<int:id>/add_subadmin/', views.id_add_subadmin, name='id_add_subadmin'),
-    # path('society_details/<int:id>/subadmin-list/', id_subadmin_list, name='id_subadmin_list'),
     path('society_details/<int:id>/admin_dashboard/', id_admin_dashboard, name='id_admin_dashboard'),
-    # path('floor-data/<int:id>/', views.resident_list, name='floor_data'),
-   
-    # path('floor-data/<int:id>/<int:building_id>/', views.resident_list, name='floor_data'),
+
    
    
     # api 
@@ -67,11 +63,7 @@ urlpatterns = [
 
     path('api/send-otp/', views.api_send_otp, name='api_send_otp'),
     path('api/verify-otp/', views.api_verify_otp, name='api_verify_otp'),
-    # path('api/members/', views.member_list, name='member-list'),
-    # path('api/members/<int:pk>/', views.member_detail, name='member-detail'),
-    # path('api/family-members/', views.family_member_list, name='family-member-list'),
-    # path('api/family-members/<int:pk>/', views.family_member_detail, name='family-member-detail'),
     path('api/member/profile/', views.api_member_profile, name='api_member_profile'),
-]
+   ]
 
 

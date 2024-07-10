@@ -74,7 +74,6 @@ def Societyprofile_admin_view(request):
 
 
 
-
 User = get_user_model()
 
 def building_list_view(request, id):
@@ -103,19 +102,14 @@ def building_list_view(request, id):
     return render(request, 'building/building_list.html', context)
 
 
+
+User = get_user_model()
+
 def add_building_view(request, id):
-    society=None
     if request.user.is_superuser:
-        society = get_object_or_404(Society, pk=id)
-    elif request.user.is_admin:
-        if id == request.user.id:
-            society = request.user.society
-        else:
-            society = get_object_or_404(Society, pk=id)
-    # else:
-    #     society = request.user.society
-    #     if society.id != id:
-    #         return HttpResponseForbidden("You don't have permission to access this society's profile.")
+        society = get_object_or_404(Society, id=id)
+    else:
+        society = get_object_or_404(Society, name=request.user.society.name)
 
     BuildingFormSet = formset_factory(BuildingForm, extra=1, can_delete=True)
 
@@ -125,25 +119,27 @@ def add_building_view(request, id):
             try:
                 instances = []
                 for form in formset:
-                    if form.is_valid() and form.cleaned_data:
+                    if form.cleaned_data:
                         building = form.save(commit=False)
                         building.society = society
-                        building.user = request.user
+                        building.user = request.user  
+                        building.created_by = request.user  
+                        building.updated_by = request.user  
                         instances.append(building)
+                                 
+                        
                 Building.objects.bulk_create(instances)
-                return JsonResponse({'success': True, 'redirect_url': reverse('building_list', args=[society.id])})
+            
+                return redirect('building_list', id=society.id)
             except Exception as e:
-                return JsonResponse({'success': False, 'error_message': str(e)})
+                error_message = str(e)
         else:
-            errors = []
-            for form in formset:
-                for field, error_list in form.errors.items():
-                    errors.extend([f"{field}: {error}" for error in error_list])
-            return JsonResponse({'success': False, 'error_message': ' '.join(errors)})
+            error_message = 'Formset is not valid. Please check the entered data.'
+            return render(request, 'building/add_building.html', {'formset': formset, 'society': society.name, 'error_message': error_message})
     else:
         formset = BuildingFormSet()
 
-    return render(request, 'building/add_building.html', {'formset': formset, 'society': society})
+    return render(request, 'building/add_building.html', {'formset': formset, 'society': society.name})
 
 
 def edit_building(request, building_id):

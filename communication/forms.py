@@ -10,61 +10,64 @@ class CommunicationForm(forms.ModelForm):
         model = Communication
         fields = ['type', 'title', 'description', 'date', 'time', 'document', 'from_date', 'to_date']
         widgets = {
-            'date': DatePickerInput(attrs={
-                'class': 'form-control', 
-                'style': 'background-color: #f8f9fa;'
+            'from_date': DatePickerInput(format='%Y-%m-%d', options={
+                'locale': 'en-us',
+                'clearBtn': True,
+                'todayBtn': True,
+                'todayHighlight': True,
+                'autoclose': True,
+                'container': '.container-fluid',
             }),
-            'time': TimePickerInput(attrs={
-                'class': 'form-control', 
-                'style': 'background-color: #f8f9fa;',
-                'data-toggle': 'datetimepicker', 
-                'data-target': '#id_time'
+            'to_date': DatePickerInput(format='%Y-%m-%d', options={
+                'locale': 'en-us',
+                'clearBtn': True,
+                'todayBtn': True,
+                'todayHighlight': True,
+                'autoclose': True,
+                'container': '.container-fluid',
             }),
-            'from_date': DatePickerInput(attrs={
-                'class': 'form-control', 
-                'style': 'background-color: #f8f9fa;'
-            }),
-            'to_date': DatePickerInput(attrs={
-                'class': 'form-control', 
-                'style': 'background-color: #f8f9fa;'
+            'time': TimePickerInput(options={
+                'locale': 'en-us',
+                'clearBtn': True,
+                'showMeridian': False,
+                'minuteStep': 1,
+                'container': '.container-fluid',
             }),
         }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        # Applying CSS classes and styles to fields
         for field_name, field in self.fields.items():
             field.widget.attrs['class'] = 'form-control'
             field.widget.attrs['style'] = 'background-color: #f8f9fa; border-color: #ced4da;'
 
-        # Assigning a specific class and style to the 'type' field
         self.fields['type'].widget.attrs['class'] = 'form-select'
         self.fields['type'].widget.attrs['style'] = 'background-color: #f1f1f1; border-color: #ced4da; color: #495057;'
 
         self.helper = FormHelper()
         self.helper.layout = Layout(
             Row(
-                Column('type', css_class='form-group col-md-6 mb-3', style='padding: 10px; background-color: #ffffff;'),
-                Column('title', css_class='form-group col-md-6 mb-3', style='padding: 10px; background-color: #ffffff;'),
+                Column('type', css_class='form-group col-md-6 mb-3'),
+                Column('title', css_class='form-group col-md-6 mb-3'),
                 css_class='form-row',
             ),
             Row(
-                Column('date', css_class='form-group col-md-4 mb-3', style='padding: 10px; background-color: #ffffff;'),
-                # Column('time', css_class='form-group col-md-4 mb-3', style='padding: 10px; background-color: #ffffff;'),
-                Column('document', css_class='form-group col-md-4 mb-3', style='padding: 10px; background-color: #ffffff;'),
+                Column('date', css_class='form-group col-md-4 mb-3'),
+                Column('time', css_class='form-group col-md-4 mb-3'),
+                Column('document', css_class='form-group col-md-4 mb-3'),
                 css_class='form-row',
             ),
             Row(
-                Column('from_date', css_class='form-group col-md-6 mb-3', style='padding: 10px; background-color: #ffffff;'),
-                Column('to_date', css_class='form-group col-md-6 mb-3', style='padding: 10px; background-color: #ffffff;'),
+                Column('from_date', css_class='form-group col-md-6 mb-3'),
+                Column('to_date', css_class='form-group col-md-6 mb-3'),
                 css_class='form-row',
             ),
             Row(
-                Column('description', css_class='form-group col-md-12 mb-3', style='padding: 10px; background-color: #ffffff;'),
+                Column('description', css_class='form-group col-md-12 mb-3'),
                 css_class='form-row',
             ),
-            Submit('submit', 'Submit', css_class='btn btn-primary', style='background-color: #007bff; border-color: #007bff; color: #ffffff; padding: 10px 20px;')
+            Submit('submit', 'Submit', css_class='btn btn-primary')
         )
 
     def clean_date(self):

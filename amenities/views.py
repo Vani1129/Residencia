@@ -56,11 +56,17 @@ def add_amenity(request, id):
     context = {
         'ameform': form,
         'society': society,
+        'id': society.id,
     }
     return render(request, 'amenity/cms/add.html', context)
 
 
 def edit_amenity(request, pk):
+    society=None
+    if request.user.is_superuser:
+        society = get_object_or_404(Society, pk=id)
+    else:
+        society = request.user.society
     amenity = get_object_or_404(Amenity, pk=pk)
     if request.method == 'POST':
         form = AmenityForm(request.POST, request.FILES, instance=amenity)
@@ -69,7 +75,13 @@ def edit_amenity(request, pk):
             return redirect('amenities')
     else:
         form = AmenityForm(instance=amenity)
-    return render(request, 'amenity/cms/edit.html', {'eform': form})
+
+    context = {
+        'eform': form,
+        'society': society,
+        'pk': pk,
+    }
+    return render(request, 'amenity/cms/edit.html', context)
 
 
 def delete_amenity(request, pk):
