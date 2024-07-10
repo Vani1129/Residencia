@@ -1,26 +1,26 @@
 {% load static %}
 
-<header class="main-header"style="background-color: #1F2839; color: darkblue;">
-  <div class="d-flex align-items-center logo-box justify-content-start"style="background-color: #1F2839;border-bottom: 2px solid darkblue;">
+<header class="main-header">
+  <div class="d-flex align-items-center logo-box justify-content-start"style="background-color: #33393f;border-bottom: 0px solid darkblue;">
     <!-- Logo -->
-    <a href="cms_home" class="logo"style="background-color: #1F2839;">
+    <a href="cms_home" class="logo"style="background-color: #33393f;">
       <!-- logo-->
-      <div class="logo-mini w-30">
-        <div style="background-color: #1F2839;">
+      <div class="logo-mini w-90">
+        <div style="background-color: #33393f;">
         <span class="light-logo"
           ><img src="{% static '/images/logo.png' %}" alt="logo"
         /></span>
         </div>
-        <div style="background-color: #1F2839;">
+        {% comment %} <div style="background-color: #333a3f;">
         <span class="dark-logo"
-          ><img src="{% static '/images/logo.png' %}" alt="logo"
+          ><img src="{% static '/images/logo1.png' %}" alt="logo"
         /></span>
-      </div>
+      </div> {% endcomment %}
     </div>
-      <div class="logo-lg">
-        <div style="background-color: #1F2839;">
+      <div class="logo-lg custom-flex-grow ">
+        <div style="background-color: #33393f;">
         <span class="light-logo"
-          ><img src="{% static '/images/logo-text.png' %}" alt="logo"
+          ><img src="{% static '/images/logotext1.png' %}" alt="logo"
         /></span>
         </div>
       </div>
@@ -161,7 +161,7 @@
         </li>
         <!-- User Account-->
         <li class="dropdown user user-menu">
-          <a href="#" class="waves-effect waves-light dropdown-toggle no-border p-5"
+          <a href="#" class="waves-effect waves-light dropdown-toggle no-border "
              data-bs-toggle="dropdown" title="User">
               <img class="avatar avatar-pill" src="{% if request.user.is_admin and request.user.image %}{% static request.user.image %}{% else %}{% static 'images/photo2.png' %}{% endif %}" alt=""/>
           </a>

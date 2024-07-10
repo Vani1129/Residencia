@@ -2,120 +2,78 @@
 {% load static %}
 
 {% block content %}
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Committee List</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
-    <style>
-        /* Table Styling */
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            background-color: #fff;
-            border: 1px solid #ddd;
-        }
-        th, td {
-            padding: 8px;
-            text-align: left;
-            border-bottom: 1px solid #ddd;
-        }
-        th {
-            background-color: #f2f2f2;
-        }
-        tr:nth-child(even) {
-            background-color: #f9f9f9;
-        }
-        tr:hover {
-            background-color: #f5f5f5;
-        }
-
-        /* Button Styling */
-        .add-button, .edit-button, .delete-button {
-            padding: 6px 10px;
-            border: none;
-            cursor: pointer;
-            margin-right: 5px;
-            color: white;
-            border-radius: 3px;
-        }
-        .add-button {
-            background-color: #007bff;
-        }
-        .edit-button {
-            background-color: #28a745;
-        }
-        .delete-button {
-            background-color: #dc3545;
-        }
-        .button-icon {
-            vertical-align: middle;
-        }
-
-        /* Table and Button Styling (omitted for brevity) */
-        .table-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        #searchInput {
-            padding: 10px 15px;
-            font-size: 16px;
-            width: 300px;
-        }
-    </style>
-</head>
-<body>
-    <h1>Committee List</h1>
-    <a class="add-button text-white" href="{% url 'society_id_add_subadmin' request.resolver_match.kwargs.society_id %}">
-        <i class="fas fa-plus button-icon"></i> Add Committee
-    </a>
-    <br><br>
-    <div class="table-header">
-        <span>Showing {{ subadmins.count }} entries</span>
-        <input type="text" id="searchInput" placeholder="Search..." oninput="filterTable()">
+<div class="content-header">
+    <div class="row">
+        <div class="col-8 text-left">
+            <h2 class="page-title">Committee List</h2>
+          
+        </div>
+        {% if request.user.is_superuser %}
+        <div class="col-4 text-right">
+            <button onclick="window.location.href='{% url 'id_add_subadmin' request.resolver_match.kwargs.id %}'" class="waves-effect waves-light btn bg-gradient-info"><i class="fa fa-plus" aria-hidden="true"></i> Add</button>
+        </div>
+        {% else %}
+        <div class="col-4 text-right">
+            <button onclick="window.location.href='{% url 'id_add_subadmin' request.user.id %}'" class="waves-effect waves-light btn bg-gradient-info"><i class="fa fa-plus" aria-hidden="true"></i> Add</button>
+        {% endif %}
+        </div>
     </div>
-    <br>
-    <table class="table table-striped">
-        <thead>
-            <tr>
-                <th>ID</th>
-                <th>Name</th>
-                <th>Role</th>
-                <th>Email</th>
-                <th>Phone Number</th>
-                <th>Flat Number</th>
-                <th>Action</th>
-            </tr>
-        </thead>
-        <tbody id="tableBody">
-            {% for subadmin in subadmins %}
-            <tr id="subadmin-row-{{ subadmin.id }}">
-                <td>{{ subadmin.id }}</td>
-                <td>{{ subadmin.user.full_name }}</td>
-                <td>{{ subadmin.role }}</td>
-                <td>{{ subadmin.user.email }}</td>
-                <td>{{ subadmin.user.phone_number }}</td>
-                <td>{{ subadmin.flat_number }}</td>
-                <td>
-                    <a href="{% url 'edit_subadmin' subadmin.pk %}" class="edit-button">
-                        <i class="fas fa-pencil-alt button-icon"></i>
-                    </a>
-                    <button class="delete-button" onclick="deleteSubadmin('{{ subadmin.id }}')">
-                        <i class="fas fa-times button-icon"></i>
-                    </button>
-                </td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+</div>
 
+
+<section class="content">
+  <div class="row">
+    <div class="col-12">
+      <div class="box">
+        <div class="box-body">
+          <div class="table-responsive">
+            <table id="example1" class="table  table-hover">
+              <thead>
+                <tr>
+                    <th>Sr.No</th>
+                    <th width="15%">Name</th>
+                    <th width="20%">Role</th>
+                    <th width="20%">Email</th>
+                    <th width="20%">Phone Number</th>
+                    <th width="20%">Flat Number</th>
+                    <th width="10%">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="tableBody">
+                {% for subadmin in subadmins %}
+                <tr id="subadmin-row-{{ subadmin.id }}">
+                    <td>{{ forloop.counter }}</td>
+                    <td>{{ subadmin.user.fullname }}</td>
+                    <td>{{ subadmin.role }}</td>
+                    <td>{{ subadmin.user.email }}</td>
+                    <td>{{ subadmin.user.phone_number }}</td>
+                    <td>{{ subadmin.flat_number }}</td>
+                    <td style="display: flex;">
+                        <a href="{% url 'edit_subadmin' subadmin.pk %}" class="waves-effect waves-light btn mr-2 bg-gradient-primary"><i class="fa fa-edit"></i></a>
+                        <button  onclick="deleteSociety({{ subadmin.id }})" class="waves-effect waves-light btn bg-gradient-danger">
+                            <i class="fa fa-trash"></i>
+                        </button>
+                        
+                    </td>
+                  </tr>
+                  {% endfor %}
+              </tbody>
+
+             
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+    
     <!-- JavaScript for handling edit action, delete action, and search functionality -->
     <script>
         function deleteSubadmin(subadminId) {
             if (confirm("Are you sure you want to delete this subadmin?")) {
-                fetch(`/user/delete_subadmin/${subadminId}/`, {
+                fetch(/user/delete_subadmin/${subadminId}/, {
                     method: 'DELETE',
                     headers: {
                         'X-CSRFToken': '{{ csrf_token }}',
@@ -123,7 +81,7 @@
                     }
                 }).then(response => {
                     if (response.ok) {
-                        document.getElementById(`subadmin-row-${subadminId}`).remove();
+                        document.getElementById(subadmin-row-${subadminId}).remove();
                     }
                 });
             }

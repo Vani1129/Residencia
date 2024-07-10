@@ -3,43 +3,29 @@ from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.utils.html import format_html
 from django.contrib.auth import get_user_model
 
-from .models import UserDetails, Member, Society, Type,FamilyMember
+from .models import UserDetails, Member, Society, Type,FamilyMember,CustomUser
 
 User = get_user_model()
 
 admin.site.register(UserDetails)
 
-# @admin.register(UserDetails)
-# class UserDetailsAdmin(admin.ModelAdmin):
-#     list_display = ('flat_number', 'age')
-#     # Add any other configurations you need
-
 
 
 @admin.register(Society)
 class SocietyAdmin(admin.ModelAdmin):
-    list_display = ('id', 'society_name')
-    # list_filter = ('is_active',)
-    search_fields = ('society_name',)
-    # actions = ['make_active', 'make_inactive']
-
-    def make_active(self, request, queryset):
-        queryset.update(is_active=True)
-    make_active.short_description = "Mark selected societies as active"
-
-    def make_inactive(self, request, queryset):
-        queryset.update(is_active=False)
-    make_inactive.short_description = "Mark selected societies as inactive"
+    list_display = ('id', 'name')
+    search_fields = ('name',)
+   
 
 @admin.register(User)
 class CustomUserAdmin(BaseUserAdmin):
-    list_display = ('email', 'phone_number', 'image_preview', 'is_staff', 'is_active', 'society_name', 'type')
+    list_display = ('email', 'phone_number', 'image_preview', 'is_staff', 'is_active', 'fullname', 'type')
     list_filter = ('is_staff', 'is_active')
-    search_fields = ('email', 'phone_number', 'society_name')
+    search_fields = ('email', 'phone_number', 'name')
     ordering = ('email',)
     list_display_links = ('email',)
     fieldsets = (
-        (None, {'fields': ('email', 'password', 'full_name', 'phone_number', 'image', 'address', 'society_name', 'type')}),
+        (None, {'fields': ('email', 'password', 'fullname', 'phone_number', 'image', 'address', 'type')}),
         ('Permissions', {'fields': ( 'is_staff', 'is_superuser')}),
         ('Important dates', {'fields': ('last_login',)}),
     )
@@ -53,6 +39,9 @@ class CustomUserAdmin(BaseUserAdmin):
 
     image_preview.short_description = 'Image'
 
+# admin.site.register(CustomUser)
+
+# admin.site.register(User)
 
 admin.site.register(Type)
 

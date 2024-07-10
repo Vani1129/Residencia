@@ -5,4 +5,4 @@ from .models import Amenity
 @admin.register(Amenity)
 class AmenityAdmin(admin.ModelAdmin):
    list_display = ( 'title', 'description', 'rule_description')
-   readonly_fields = ('created_at', 'updated_at', 'created_by', 'updated_by')
+   # readonly_fields = ('created_at', 'updated_at', 'created_by__fullname', 'updated_by__fullname' )

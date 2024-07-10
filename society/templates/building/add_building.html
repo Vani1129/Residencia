@@ -4,31 +4,178 @@
 
 {% block content %}
 <div class="container mt-5">
-    <h2>Add Building for {{ society.society_name }}</h2>
-    <form method="post">
+    <h2>Add Building for {{ society.name }}</h2>
+    <form id="building-form" method="post">
         {% csrf_token %}
-        {% for field in form %}
-            <div class="form-group">
-                {{ field|as_crispy_field }}
-                {% if field.errors %}
-                    <span class="error-message">{{ field.errors.0 }}</span>
-                {% endif %}
+        {{ formset.management_form }}
+        <div id="formset-container">
+            {% for form in formset %}
+            <div class="formset-row mb-2">
+                <div class="row align-items-center">
+                    <div class="col-md-4">
+                        {{ form.name|as_crispy_field }}
+                    </div>
+                    <div class="col-md-4">
+                        {{ form.total_flats|as_crispy_field }}
+                    </div>
+                    <div class="col-md-3">
+                        {{ form.type|as_crispy_field }}
+                    </div>
+                    <div class="col-md-1">
+                        <button type="button" class="btn btn-sm btn-danger remove-formset-row" aria-label="Remove"><i class="fas fa-minus"></i></button>
+                        <button type="button" class="btn btn-sm btn-success add-formset-row" aria-label="Add"><i class="fas fa-plus"></i></button>
+                    </div>
+                </div>
             </div>
-        {% endfor %}
-        <button type="submit" class="btn btn-primary">Add Building</button>
+            {% endfor %}
+        </div>
+        <button type="submit" class="btn btn-primary mt-3">Add Buildings</button>
     </form>
 </div>
 
-<style>
-    .error-message {
-        color: red;
-        
-        display: block;
-        margin-top: 5px;
-    }
-    /* Override crispy-forms error styles to prevent duplication */
-    .invalid-feedback {
-        display: none !important;
-    }
-</style>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const formsetContainer = document.getElementById('formset-container');
+        const form = document.getElementById('building-form');
+
+        formsetContainer.addEventListener('click', function (event) {
+            if (event.target.classList.contains('remove-formset-row') || event.target.closest('.remove-formset-row')) {
+                const formsetRow = event.target.closest('.formset-row');
+                formsetRow.remove();
+
+                const totalForms = document.getElementById('id_form-TOTAL_FORMS');
+                const currentFormCount = parseInt(totalForms.value);
+                const newFormCount = currentFormCount - 1;
+                totalForms.setAttribute('value', newFormCount);
+            } else if (event.target.classList.contains('add-formset-row') || event.target.closest('.add-formset-row')) {
+                const formsetRow = formsetContainer.querySelector('.formset-row:last-of-type').cloneNode(true);
+                const totalForms = document.getElementById('id_form-TOTAL_FORMS');
+                const currentFormCount = parseInt(totalForms.value);
+                const newFormCount = currentFormCount + 1;
+
+                formsetRow.querySelectorAll('input, select').forEach((element) => {
+                    const oldName = element.getAttribute('name');
+                    const newName = oldName.replace(-${currentFormCount - 1}-, -${currentFormCount}-);
+                    element.setAttribute('name', newName);
+                    element.setAttribute('id', id_${newName});
+                    element.value = '';
+                });
+
+                formsetContainer.appendChild(formsetRow);
+                totalForms.setAttribute('value', newFormCount);
+            }
+        });
+
+        form.addEventListener('submit', function (event) {
+            event.preventDefault();
+            const formData = new FormData(form);
+
+            fetch(form.action, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    window.location.href = data.redirect_url;
+                } else {
+                    alert(data.error_message);
+                }
+            })
+            .catch(error => console.error('Error:', error));
+        });
+    });
+</script>
 {% endblock %}
+
+{% comment %} 
+
+{% extends "base.html" %}
+{% load crispy_forms_tags %}
+{% load static %}
+
+{% block content %}
+<div class="container mt-5">
+    <h2>Add Building for {{ society.name }}</h2>
+    <form id="building-form" method="post">
+        {% csrf_token %}
+        {{ formset.management_form }}
+        <div id="formset-container">
+            {% for form in formset %}
+            <div class="formset-row d-flex align-items-center mb-2">
+                <div class="form-group flex-grow-1">
+                    {{ form.name|as_crispy_field }}
+                </div>
+                <button type="button" class="btn btn-sm btn-danger ml-2 remove-formset-row" aria-label="Remove"><i class="fas fa-minus"></i></button>
+                {% if forloop.last %}
+                <button type="button" class="btn btn-sm btn-success ml-2 add-formset-row" aria-label="Add"><i class="fas fa-plus"></i></button>
+                {% endif %}
+            </div>
+            {% endfor %}
+         </div>
+        <button type="submit" class="btn btn-primary">Add Buildings</button>
+   
+    </form>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const formsetContainer = document.getElementById('formset-container');
+        const form = document.getElementById('building-form');
+
+        formsetContainer.addEventListener('click', function (event) {
+            if (event.target && event.target.classList.contains('remove-formset-row')) {
+                const formsetRow = event.target.closest('.formset-row');
+                formsetRow.remove();
+
+                const totalForms = document.getElementById('id_form-TOTAL_FORMS');
+                const currentFormCount = parseInt(totalForms.value);
+                const newFormCount = currentFormCount - 1;
+                totalForms.setAttribute('value', newFormCount);
+            } else if (event.target && event.target.classList.contains('add-formset-row')) {
+                const formsetRow = document.querySelector('.formset-row:last-of-type').cloneNode(true);
+                const totalForms = document.getElementById('id_form-TOTAL_FORMS');
+                const currentFormCount = parseInt(totalForms.value);
+                const newFormCount = currentFormCount + 1;
+
+                formsetRow.querySelector('input').value = '';
+                formsetRow.querySelectorAll('input, select').forEach((element) => {
+                    const oldName = element.getAttribute('name');
+                    const newName = oldName.replace(`-${currentFormCount - 1}-`, `-${currentFormCount}-`);
+                    element.setAttribute('name', newName);
+                    element.setAttribute('id', `id_${newName}`);
+                });
+
+                formsetContainer.appendChild(formsetRow);
+                totalForms.setAttribute('value', newFormCount);
+            }
+        });
+
+        form.addEventListener('submit', function (event) {
+            event.preventDefault();
+            const formData = new FormData(form);
+
+            fetch(form.action, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    window.location.href = data.redirect_url;
+                } else {
+                    alert(data.error_message);
+                }
+            })
+            .catch(error => console.error('Error:', error));
+        });
+    });
+</script>
+
+{% endblock %} {% endcomment %}

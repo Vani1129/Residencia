@@ -1,9 +1,12 @@
 from django.urls import path
+
 from . import views
 
 urlpatterns = [
-    path('', views.AmenityListView.as_view(), name='amenities'),  # Main page to list amenities
-    path('add/', views.add_amenity, name='add_amenity'),         # Page to add a new amenity
-    path('edit/<int:pk>/', views.edit_amenity, name='edit_amenity'),
-    path('delete/<int:pk>/', views.delete_amenity, name='delete_amenity'),
+    # path('amenities/', views.AmenityListView.as_view(), name='amenities'),
+    path('amen/amenities/<int:id>/', views.amenities, name='amenities'),
+    path('amenity/add/<int:id>/', views.add_amenity, name='add_amenity'),
+    path('amenity/edit/<int:id>/<int:pk>/', views.edit_amenity, name='edit_amenity'),
+    path('amenity/delete/<int:id>/<int:pk>/', views.delete_amenity, name='delete_amenity'),
+    # Other URLs as needed
 ]

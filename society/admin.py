@@ -1,39 +1,20 @@
 from django.contrib import admin
-from .models import Society_profile, Staff, Building, Unit
+from .models import Societyprofile, Building
 
-@admin.register(Society_profile)
-class SocietyAdmin(admin.ModelAdmin):
-    list_display = ('society_id', 'society_name', 'city', 'state', 'zip_code')
-    search_fields = ( 'society_name__society_name', 'city', 'state', 'zip_code')
-
-@admin.register(Staff)
-class StaffAdmin(admin.ModelAdmin):
-    list_display = ('staff_id', 'society_name', 'designation', 'joined_date')
-    search_fields = ('designation', 'society__society_name__society_name')
-
-@admin.register(Building)
-class BuildingAdmin(admin.ModelAdmin):
-    list_display = ( 'society', 'name')
-    search_fields = ('name', 'society_name__society_name')
-
-
-@admin.register(Unit)
-class UnitAdmin(admin.ModelAdmin):
-    list_display = ('building','unit_number', 'unit_type')
-    search_fields = ('unit_number', 'unit_type', 'society_name__society_name')
+@admin.register(Societyprofile)
+class SocietyprofileAdmin(admin.ModelAdmin):
+    list_display = ( 'city', 'state', 'zip_code')
+    search_fields = ( 'name__name', 'city', 'state', 'zip_code')
 
 
 
+admin.site.register(Building)
 
-# @admin.register(Registration)
-# class RegistrationAdmin(admin.ModelAdmin):
-#     list_display = ('society_name', 'full_name', 'phone_number', 'email_id', 'type')  # Rep
+# @admin.register(Building)
+# class BuildingAdmin(admin.ModelAdmin):
+    # list_display = (  'name')
+    # search_fields = ('name', 'name__name')
+    # readonly_fields = ('created_at', 'updated_at', 'created_by__fullname', 'updated_by__fullname' )
 
 
-# @admin.register(User)
-# class UserAdmin(admin.ModelAdmin):
-#     list_display = ('email', 'phone_number', 'is_staff', 'is_active',)
-#     list_filter = ('email', 'phone_number', 'is_staff', 'is_active',)
-#     search_fields = ('email', 'phone_number',)
-#     ordering = ('email',)
 

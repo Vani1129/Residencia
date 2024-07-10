@@ -1,132 +1,118 @@
 {% extends 'base.html' %}
 {% load static %}
-
 {% block title %}Amenities{% endblock %}
-
 {% block content %}
-<head>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
-    <style>
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            background-color: #fff;
-            border: 1px solid #ddd;
-        }
-        th, td {
-            padding: 8px;
-            text-align: left;
-            border-bottom: 1px solid #ddd;
-        }
-        th {
-            background-color: #f2f2f2;
-        }
-        tr:nth-child(even) {
-            background-color: #f9f9f9;
-        }
-        tr:hover {
-            background-color: #f5f5f5;
-        }
-        .add-button, .edit-button, .delete-button {
-            padding: 6px 10px;
-            border: none;
-            cursor: pointer;
-            margin-right: 5px;
-            color: white;
-            border-radius: 3px;
-        }
-        .add-button {
-            background-color: #007bff;
-        }
-        .edit-button {
-            background-color: #28a745;
-        }
-        .delete-button {
-            background-color: #dc3545;
-        }
-        .button-icon {
-            vertical-align: middle;
-        }
-        .table-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        #searchInput {
-            padding: 10px 15px;
-            font-size: 16px;
-            width: 300px;
-        }
-    </style>
-</head>
-<body>
-    <h1>Amenities</h1>
-    <a class="add-button text-white" href="{% url 'add_amenity' %}">
-        <i class="fas fa-plus button-icon"></i> Add Amenity
-    </a>
-    <br><br>
-    <div class="table-header">
-        <span>Showing {{ amenities|length }} entries</span>
-        <input type="text" id="searchInput" placeholder="Search..." oninput="filterTable()">
+<div class="content-header">
+    <div class="row">
+        <div class="col-6 text-left" style="margin-bottom: 20px;">
+            <h4>Amenities</h4>
+        </div>
+        <div class="col-6 text-right" style="margin-bottom: 20px;">
+            {% if request.user.is_superuser %}
+            <button onclick="window.location.href='{% url 'add_amenity' request.resolver_match.kwargs.id %}'" class="waves-effect waves-light btn bg-gradient-info">
+                <i class="fa fa-plus" aria-hidden="true"></i> Add
+            </button>
+            {% else %}
+            <button onclick="window.location.href='{% url 'add_amenity' request.user.id %}'" class="waves-effect waves-light btn bg-gradient-info">
+                <i class="fa fa-plus" aria-hidden="true"></i> Add
+            </button>
+            {% endif %}
+        </div>
     </div>
-    <br>
-    <table class="table table-striped">
-        <thead>
-            <tr>
-                <th>Title</th>
-                <th>Description</th>
-                <th>Rule Description</th>
-                <th>Image</th>
-                <th>Action</th>
-            </tr>
-        </thead>
-        <tbody id="tableBody">
-            {% for amenity in amenities %}
-            <tr id="amenity-row-{{ amenity.id }}">
-                <td>{{ amenity.title }}</td>
-                <td>{{ amenity.description }}</td>
-                <td>{{ amenity.rule_description }}</td>
-                <td>
-                    {% if amenity.image %}
-                        <img src="{{ amenity.image.url }}" alt="{{ amenity.title }}" style="width: 50px; height: auto;">
-                    {% else %}
-                        No image
-                    {% endif %}
-                </td>
-                <td>
-                    <a href="{% url 'edit_amenity' amenity.pk %}" class="edit-button">
-                        <i class="fas fa-pencil-alt button-icon"></i>
-                    </a>
-                    <button class="delete-button" onclick="deleteAmenity('{{ amenity.id }}')">
-                        <i class="fas fa-times button-icon"></i>
-                    </button>
-                </td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+</div>
+<section class="content">
+    <div class="row">
+        <div class="col-12">
+            <div class="box">
+                <div class="box-body">
+                    <div class="table-responsive">
+                        <input type="text" id="searchInput" onkeyup="filterTable()" placeholder="Search...">
+                        <table id="example1" class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Sr.No.</th>
+                                    <th>Title</th>
+                                    <th>Description</th>
+                                    <th>Rule Description</th>
+                                    <th>Image</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tableBody">
+                                {% for amenity in amenities %}
+                                <tr id="amenity-row-{{ amenity.id }}">
+                                    <td>{{ forloop.counter }}</td>
+                                    <td>{{ amenity.title }}</td>
+                                    <td>{{ amenity.description }}</td>
+                                    <td>{{ amenity.rule_description }}</td>
+                                    <td>
+                                        {% if amenity.image %}
+                                        <img src="{{ amenity.image.url }}" alt="{{ amenity.title }}" style="width: 50px; height: auto;">
+                                        {% else %}
+                                        No image
+                                        {% endif %}
+                                    </td>
+                                    <td style="display: flex;">
+                                        <button onclick="window.location.href='{% url 'edit_amenity' pk=amenity.pk id=request.resolver_match.kwargs.id %}'" class="waves-effect waves-light btn mr-2 bg-gradient-primary"><i class="fa fa-edit"></i></button>
+                                        <button onclick="deleteAmenity({{ amenity.pk }})" class="waves-effect waves-light btn bg-gradient-danger"><i class="fa fa-trash"></i></button>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+<script>
+    function deleteAmenity(amenityId) {
+        if (confirm("Are you sure you want to delete this amenity?")) {
+            // Here you should add the actual delete request to your backend
+            // For example, using fetch:
+            fetch(`/delete-amenity/${amenityId}/`, {
+                method: 'DELETE',
+                headers: {
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+            }).then(response => {
+                if (response.ok) {
+                    document.getElementById(`amenity-row-${amenityId}`).remove();
+                } else {
+                    alert('Failed to delete amenity');
+                }
+            });
+        }
+    }
 
-    <script>
-        function deleteAmenity(amenityId) {
-            if (confirm("Are you sure you want to delete this amenity?")) {
-                document.getElementById(`amenity-row-${amenityId}`).remove();
-                // Here you should add the actual delete request to your backend
+    function filterTable() {
+        const searchInput = document.getElementById('searchInput').value.toLowerCase();
+        const tableRows = document.getElementById('tableBody').getElementsByTagName('tr');
+        for (let i = 0; i < tableRows.length; i++) {
+            const rowData = tableRows[i].textContent.toLowerCase();
+            if (rowData.includes(searchInput)) {
+                tableRows[i].style.display = '';
+            } else {
+                tableRows[i].style.display = 'none';
             }
         }
+    }
 
-        function filterTable() {
-            const searchInput = document.getElementById('searchInput').value.toLowerCase();
-            const tableRows = document.getElementById('tableBody').getElementsByTagName('tr');
-
-            for (let i = 0; i < tableRows.length; i++) {
-                const rowData = tableRows[i].textContent.toLowerCase();
-                if (rowData.includes(searchInput)) {
-                    tableRows[i].style.display = '';
-                } else {
-                    tableRows[i].style.display = 'none';
+    // Function to get CSRF token
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
                 }
             }
         }
-    </script>
-</body>
+        return cookieValue;
+    }
+</script>
 {% endblock %}

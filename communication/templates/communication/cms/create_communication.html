@@ -1,0 +1,56 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %}Create Annoucements{% endblock %}
+
+{% block content %}
+    <div class="row mt-5 justify-content-center">
+        <div class="col-lg-12 col-md-12 col-sm-12">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="card-title">Create Annoucements</h4>
+                </div>
+          
+                <div class="card-body">
+                    
+                        {% csrf_token %}
+                        {% crispy communform %}
+      
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %} 
+
+{% comment %} {% extends 'base.html' %}
+{% load crispy_forms_tags %}
+<!DOCTYPE html>
+<html>
+<head>
+    {% block title %}Create Communication{% endblock %}
+</head>
+<body>
+    {% block content %}
+    <div class="container mt-5">
+        <div class="row justify-content-center">
+            <div class="col-lg-8 col-md-10 col-sm-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h4 class="card-title">Create Communication</h4>
+                    </div>
+                    <div class="card-body">
+                        <form method="post">
+                            {% csrf_token %}
+                            {% crispy communform %}
+                            <button type="submit" class="btn btn-primary">Submit</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endblock %}
+</body>
+</html>
+
+ {% endcomment %}

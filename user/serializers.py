@@ -32,7 +32,7 @@ class CreateFamilyMemberSerializer(serializers.ModelSerializer):
     class Meta:
         model = FamilyMember
         fields = [
-            'full_name',
+            'fullname',
             'date_of_birth',
             'gender',
             'phone_number',
@@ -57,7 +57,7 @@ class MemberCreateUpdateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Member
         fields = '__all__'
-
+    
     def create(self, validated_data):
         family_members_data = validated_data.pop('family_members', [])
 
@@ -82,7 +82,7 @@ class MemberCreateUpdateSerializer(serializers.ModelSerializer):
             family_member_id = family_member_data.get('id')
             if family_member_id:
                 family_member = FamilyMember.objects.get(id=family_member_id, member=instance)
-                family_member.full_name = family_member_data.get('full_name', family_member.full_name)
+                family_member.fullname = family_member_data.get('fullname', family_member.fullname)
                 family_member.date_of_birth = family_member_data.get('date_of_birth', family_member.date_of_birth)
                 family_member.gender = family_member_data.get('gender', family_member.gender)
                 family_member.phone_number = family_member_data.get('phone_number', family_member.phone_number)

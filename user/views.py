@@ -1,65 +1,50 @@
-# import json
-# from django.http import JsonResponse
-# from django.shortcuts import render, redirect, get_object_or_404
-# from django.http import HttpResponse
-# from django.contrib.auth import authenticate,login
-# from django.contrib import messages
-# from django.contrib.auth import get_user_model
-# from django.db import IntegrityError
-# from .forms import UserForm, OTPForm, MemberForm, SocietyForm, SubadminForm
-# from .utils import generate_otp
-# from django.contrib.auth.decorators import user_passes_test
-# from django.contrib.auth import get_user_model
-# from django.contrib.auth import logout as auth_logout
-# from .models import Society, UserDetails, User
-# from django.views.decorators.http import require_http_methods
-# from django.shortcuts import get_object_or_404
-# from .forms import UserEditForm
-# from society.models import Society_profile
-# from user.models import User
-
-from django.contrib.auth import authenticate, login
-from django.contrib.auth.decorators import user_passes_test
+from django.contrib import messages
+from django.contrib.auth import authenticate, login, get_user_model
+from django.contrib.auth.decorators import user_passes_test, login_required
 from django.contrib.auth.models import User
-from django.http import JsonResponse, HttpResponse
+from django.db import IntegrityError, transaction
+from django.db.models import ProtectedError
+from django.http import Http404, JsonResponse, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
-from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.csrf import csrf_exempt, ensure_csrf_cookie
 from django.views.decorators.http import require_http_methods, require_POST
-from django.contrib import messages
-from django.db import IntegrityError
-from django.contrib.auth import get_user_model
-from rest_framework.response import Response
-from rest_framework.decorators import api_view, permission_classes
-from drf_yasg.utils import swagger_auto_schema
-from drf_yasg import openapi
-from rest_framework.permissions import IsAuthenticated
+from django.db.models import Q
+from django.http import HttpResponseForbidden
+
 from rest_framework import status
 from rest_framework.authtoken.models import Token
-from .forms import UserForm, OTPForm, MemberForm, SocietyForm, SubadminForm, UserEditForm,FamilyMemberForm
-from .utils import generate_otp
-from .models import Society, UserDetails, Member, FamilyMember
-from .serializers import UserLoginSerializer,MemberProfileSerializer, MemberCreateUpdateSerializer
-
-from django.contrib.auth import get_user_model
-from society.models import Society_profile
-from django.contrib.auth.decorators import login_required
-from .forms import OTPForm
-
-
-
-
-
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
 from django.shortcuts import render, redirect
-from .forms import MemberForm, FamilyMemberForm
-from society.models import  Building
+from django.utils import timezone
+from society.models import Societyprofile 
+from drf_yasg import openapi
+from drf_yasg.utils import swagger_auto_schema
+
+from .forms import (
+    UserForm, OTPForm, MemberForm, SocietyForm, SubadminForm, 
+    UserEditForm, FamilyMemberForm
+)
+from .models import (
+    Society, UserDetails, Member, FamilyMember, Type
+)
+from .serializers import (
+    UserLoginSerializer, MemberProfileSerializer, 
+    MemberCreateUpdateSerializer
+)
+from .utils import generate_otp
+from society.models import Societyprofile, Building
 
 
-def resident_list(request, society_id, building_id):
+def resident_list(request, id, building_id):
+    society = get_object_or_404(Society, id=id)
     building = get_object_or_404(Building, id=building_id)
     members = Member.objects.filter(building=building)
 
     context = {
+        'society': society,
         'building': building,
         'members': members,
     }
@@ -67,40 +52,28 @@ def resident_list(request, society_id, building_id):
 
 
 
-def add_resident(request, society_id, building_id):
+from django.db import IntegrityError
+
+def add_resident(request, id, building_id):
     society = None
     building = None
-    
-    # Debug: Check if user is superuser
-    print(f"User is superuser: {request.user.is_superuser}")
-    
+        
     if request.user.is_superuser:
-        society = get_object_or_404(Society, id=society_id)
+        society = get_object_or_404(Society, id=id)
         building = get_object_or_404(Building, id=building_id)
     else:
-        usr_id = society_id
+        usr_id = id
         user = User.objects.get(id=usr_id)
         
-        # Debug: Check retrieved user details
-        print(f"Retrieved user: {user}")
-        
-        society = get_object_or_404(Society, society_name=user.society_name)
+        society = user.name
         building = get_object_or_404(Building, id=building_id)
-    
-    # Debug: Check society and building details
-    print(f"Society: {society}")
-    print(f"Building: {building}")
     
     if request.method == 'POST':
         form = MemberForm(request.POST, request.FILES)
         family_form = FamilyMemberForm(request.POST)
         
-        # Debug: Check form validity
-        print(f"Form is valid: {form.is_valid()}")
-        print(f"Family form is valid: {family_form.is_valid()}")
-        
         if form.is_valid() and family_form.is_valid():
-            name = form.cleaned_data.get('full_name')
+            name = form.cleaned_data.get('fullname')
             phone = form.cleaned_data.get('phone_number')
             email = form.cleaned_data.get('email')
             flat_number = form.cleaned_data.get('flat_number')
@@ -110,88 +83,100 @@ def add_resident(request, society_id, building_id):
             country = form.cleaned_data.get('country')
             member_type = form.cleaned_data.get('member_type')
             
-            # Debug: Check cleaned form data
-            print(f"Name: {name}, Phone: {phone}, Email: {email}, Flat Number: {flat_number}")
-            
-            user_exist_by_phone = User.objects.filter(phone_number=phone).first()
-            user_exist_by_email = User.objects.filter(email=email).first()
-            
-            # Debug: Check if user already exists
-            print(f"User exists by phone: {user_exist_by_phone}")
-            print(f"User exists by email: {user_exist_by_email}")
+            user_exist_by_phone = User.objects.filter(phone_number=phone).exists()
+            user_exist_by_email = User.objects.filter(email=email).exists()
+        
+            if user_exist_by_phone:
+                form.add_error('phone_number', "User with this phone number already exists.")
+            if user_exist_by_email:
+                form.add_error('email', "User with this email already exists.")
             
             if not user_exist_by_phone and not user_exist_by_email:
-                user = User.objects.create(
-                    full_name=name,
-                    phone_number=phone,
-                    email=email,
-                    is_admin=False
-                )
+                try:
+                    user = User.objects.create(
+                        fullname=name,
+                        phone_number=phone,
+                        email=email,
+                        is_admin=False
+                    )
+                    
+                    member = Member.objects.create(
+                        society=society,
+                        user=user,
+                        building=building,
+                        flat_number=flat_number,
+                        date_of_birth=date_of_birth,
+                        gender=gender,
+                        country=country,
+                        member_type=member_type
+                    )
+                    
+                    number_of_members = form.cleaned_data.get('number_of_members', 1)
                 
-                # Debug: Check created user
-                print(f"Created user: {user}")
+                    if number_of_members is not None:
+                        for _ in range(number_of_members):
+                            try:
+                                user_fm = User.objects.create(
+                                    fullname=family_form.cleaned_data.get('family_fullname'),
+                                    phone_number=family_form.cleaned_data.get('family_phone_number'),                           
+                                    is_admin=False
+                                )
+                                FamilyMember.objects.create(
+                                    user=user_fm,
+                                    member=member,
+                                    fullname=family_form.cleaned_data.get('family_fullname'),
+                                    date_of_birth=family_form.cleaned_data.get('family_date_of_birth'),
+                                    gender=family_form.cleaned_data.get('family_gender'),
+                                    phone_number=family_form.cleaned_data.get('family_phone_number'),
+                                    family_relation=family_form.cleaned_data.get('family_relation')
+                                )
+                            except IntegrityError:
+                                # form.add_error('family_phone_number', f"Family member with phone number {family_form.cleaned_data.get('family_phone_number')} already exists.")
+                                break
+                    
+                    if not form.errors:
+                        return redirect('floor_data', building_id=building.id, id=society.id)
                 
-                member = Member.objects.create(
-                    society=society,
-                    user=user,
-                    building=building,
-                    flat_number=flat_number,
-                    date_of_birth=date_of_birth,
-                    gender=gender,
-                    country=country,
-                    member_type=member_type
-                )
-                
-                number_of_members = form.cleaned_data.get('number_of_members', 1)
-                
-                # Debug: Check number of family members
-                print(f"Number of members: {number_of_members}")
-                print(f"Number of members: {member}")
-                
-                if number_of_members is not None:
-                    for _ in range(number_of_members):
-                        user_fm= User.objects.create(
-                            full_name=form.cleaned_data.get('family_full_name'),
-                            phone_number=form.cleaned_data.get('family_phone_number'),
-                           
-                            is_admin=False
-                        )
-                        print(f"{user_fm=}")
-                        family_instance = FamilyMember.objects.create(
-                            user = user_fm,
-                            member = member,
-                            full_name = form.cleaned_data.get('family_full_name'),
-                            date_of_birth = form.cleaned_data.get('date_of_birth'),
-                            gender = form.cleaned_data.get('gender'),
-                            phone_number = form.cleaned_data.get('family_phone_number'),
-                            family_relation = form.cleaned_data.get('family_relation')
-                        )
-                        print(f"Created family member: {family_instance}")
-                        
-                        # Debug: Check created family member
-                
-                return redirect('floor_data', building_id=building.id, society_id=society.id)
-            else:
-                if user_exist_by_phone:
+                except IntegrityError:
                     form.add_error('phone_number', "User with this phone number already exists.")
-                if user_exist_by_email:
-                    form.add_error('email', "User with this email already exists.")
-        else:
-            # Debug: Invalid form data
-            print("Form or Family form is invalid")
     else:
-        form = MemberForm(initial={'society_name_display': society.society_name, 'building_display': building.name})
+        form = MemberForm(initial={'name_display': society.name, 'building_display': building.name})
         family_form = FamilyMemberForm()
     
     context = {
         'form': form,
         'family_form': family_form,
+        'id': id,
     }
     
-    # Debug: Render context data
-    print(f"Rendering context: {context}")
     return render(request, 'building/add_resident.html', context)
 
+def edit_resident(request, member_id, id, building_id):
+    member = get_object_or_404(Member, id=member_id)
+    society = get_object_or_404(Society, id=id)
+    building = get_object_or_404(Building, id=building_id)
+    
+    if request.method == 'POST':
+        form = MemberForm(request.POST, request.FILES, instance=member)
+        family_member = member.family_members.first()
+        family_form = FamilyMemberForm(request.POST, instance=family_member)
+
+        if form.is_valid() and family_form.is_valid():
+            form.save()
+            family_form.save()
+            return redirect('floor_data', building_id=building.id, id=society.id)
+    else:
+        form = MemberForm(instance=member, initial={'name_display': society.name, 'building_display': building.name})
+        family_member = member.family_members.first()
+        family_form = FamilyMemberForm(instance=family_member)
+
+    context = {
+        'resform': form,
+        'resfamily_form': family_form,
+        'id': id,
+        'building_id': building_id,
+    }
+    return render(request, 'building/edit_resident.html', context)
 
 
 def delete_resident(request, resident_id):
@@ -210,16 +195,17 @@ def delete_resident(request, resident_id):
     
     return JsonResponse({'error': 'Method not allowed.'}, status=405)
 
+
 def home(request):
     return HttpResponse("Welcome to the Society Home Page")
 
-def register(request, society_id):
-    society = get_object_or_404(Society, id=society_id)
+def register(request, id):
+    society = get_object_or_404(Society, id=id)
     
     if request.method == 'POST':
         form = UserForm(request.POST, request.FILES)
         if form.is_valid():
-            full_name = form.cleaned_data.get('full_name')
+            fullname = form.cleaned_data.get('fullname')
             phone_number = form.cleaned_data.get('phone_number')
             image = form.cleaned_data.get('image')
             email = form.cleaned_data.get('email')
@@ -233,23 +219,24 @@ def register(request, society_id):
             else:
                 try:
                     user = UserModel.objects.create_user(
-                        full_name=full_name,
+                        fullname=fullname,
                         phone_number=phone_number,
                         email=email,
                         password=password,
-                        society_name=society,  # Use the Society instance
+                        society=society,
+                        # name=society.name,  
                         is_admin=True,
                         image=image,
                     )
                     messages.success(request, 'Registration successful. You can now login.')
-                    return redirect('society_id_admin_dashboard', society_id=society.id)
+                    return redirect('id_admin_dashboard', id=society.id)
                 except IntegrityError as e:
                     messages.error(request, f'An error occurred: {str(e)}')
         else:
             messages.error(request, 'Invalid form data. Please check the provided information.')
     else:
         society_types = society.type.values_list('name', flat=True)
-        form = UserForm(initial={'society_name_display': society.society_name, 'society_type_display': ", ".join(society_types)})
+        form = UserForm(initial={'name_display': society.name, 'society_type_display': ", ".join(society_types)})
 
     return render(request, 'registration/register.html', {'form': form, 'society': society})
 
@@ -294,29 +281,12 @@ def login_view(request):
         form = OTPForm()
     return render(request, 'registration/login.html', {'form': form})
 
-# def admin_dashboard(request):
-#     return render(request, 'dashboard.html')
-UserModel = get_user_model()
-
-@user_passes_test(lambda u: u.is_superuser)
-def admin_dashboard(request,society_id):
-    society = Society.objects.get(id=society_id)
-    users = UserModel.objects.filter(society_name=society.society_name)
-    # SubadminForm = UserDetails.objects.filter(role='Sub Admin',)
-    return render(request, 'registration/admin_dashboard.html', {'users': users, 'society': society})
-
-# def society_id_subadmin_list(request, society_id):
-#     subadmins = UserDetails.objects.filter(society_sub=society_id, role='committee_member')
-#     return render(request, 'registration/subadmin_list.html', {'subadmins': subadmins, 'society_id': society_id})
 
 
+# def id_subadmin_list(request, id):
+#     subadmins = UserDetails.objects.filter(society_sub=id, role='committee_member')
+#     return render(request, 'registration/subadmin_list.html', {'subadmins': subadmins, 'id': id})
 
-from django.shortcuts import render, redirect
-from django.contrib import messages
-from django.http import JsonResponse
-from django.urls import reverse
-from django.contrib.auth import login, get_user_model
-from .forms import OTPForm
 
 def send_otp_view(request):
     if request.method == 'POST':
@@ -388,11 +358,9 @@ def otp_verify(request):
         else:
             messages.error(request, 'Invalid form submission. Please try again.')
     else:
-        # Pre-fill the phone number field if available in session
         phone_number = request.session.get('phone_number')
         form = OTPForm(initial={'phone_number': phone_number})
 
-    # Make phone_number field read-only in the form
     form.fields['phone_number'].widget.attrs['readonly'] = True
 
     return render(request, 'registration/otp_verify.html', {'form': form})
@@ -422,43 +390,35 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-from django.shortcuts import render, redirect
-from django.utils import timezone
-from .forms import SocietyForm
-from .models import Society, Type
-from society.models import Society_profile  # Assuming these are your model names
 
 def add_society(request):
     if request.method == 'POST':
         form = SocietyForm(request.POST)
         if form.is_valid():
             print("Form is valid")
-            print(form.cleaned_data)
-            types = form.cleaned_data["type"]
-            print(f"{form.cleaned_data.get('is_active')=}")
             
             society = Society.objects.create(
-                society_name=form.cleaned_data["society_name"],
-                # is_active=form.cleaned_data.get("is_active", False),  # Use get() with a default value
+                name=form.cleaned_data["name"],
                 from_date=form.cleaned_data["from_date"],
                 to_date=form.cleaned_data.get("to_date"),
-               
+                interval=form.cleaned_data.get("interval"),
             )
-            
-            for type_obj in types:
+                        
+            for type_obj in form.cleaned_data["type"]:
                 society.type.add(type_obj)
             
             society.save()
-            society_profile = Society_profile.objects.create(
-                society_name=society
+            
+            society_profile = Societyprofile.objects.create(
+               society=society,  
+                name=society.name
             )
-            society_profile.save()
-            print(f"{society_profile=}")
+            print("Society profile created:", society_profile.__dict__) 
             
             return redirect('show_societies')
         else:
             print("Form is not valid")
-            print(form.errors)  # Print form errors for debugging
+            print("Form errors:", form.errors)
     else:
         form = SocietyForm()
     return render(request, 'registration/add_society.html', {'form': form})
@@ -467,6 +427,8 @@ def add_society(request):
 def show_societies(request):
     societies = Society.objects.all()
     context = {'societies': societies}
+    for society in societies:
+        print(f"Society: {society.name}, Interval: {society.interval}")
     return render(request, 'registration/show_societies.html', context)  # Make sure this matches your actual template path
 
 
@@ -481,42 +443,65 @@ def edit_society(request, id):
     else:
         form = SocietyForm(instance=society)
 
-    return render(request, 'registration/edit_society.html', {'form': form, 'society': society})
+    return render(request, 'registration/edit_society.html', {'socform': form, 'society': society})
 
 
 
 User = get_user_model()
 
-def subadmin_list(request, society_id):
+def subadmin_list(request, id):
     pass
     # if request.user.is_superuser:
-    #     subadmins = UserDetails.objects.filter(society_sub__id=society_id)
+    #     subadmins = UserDetails.objects.filter(society_sub__id=id)
     # elif request.user.is_admin:
-    #     usr_id = society_id
+    #     usr_id = id
     #     user = User.objects.get(id=usr_id)
-    #     print(f"{user.society_name=}")
+    #     print(f"{user.name=}")
         
-    #     subadmins = UserDetails.objects.filter(society_sub__society_name=user.society_name)
+    #     subadmins = UserDetails.objects.filter(society_sub__name=user.name)
 
     # # subadmins = UserDetails.objects.filter(society_sub__id=request.user.userdetails.society_sub.id)
     # return render(request, 'subadmin_list.html', {'subadmins': subadmins})
 
-def society_id_subadmin_list(request, society_id=None):
-    print(f"{request.user=}")
-    
+def id_subadmin_list(request, id=None):
     if request.user.is_superuser:
-        subadmins = UserDetails.objects.filter(society_sub__id=society_id)
+        society = get_object_or_404(Society, pk=id)
+    elif request.user.is_admin:
+        if id == request.user.id:
+            society = request.user.society
+        else:
+            society = get_object_or_404(Society, pk=id)
     else:
-        usr_id = society_id
-        user = User.objects.get(id=usr_id)
-        subadmins = UserDetails.objects.filter(society_sub__society_name=user.society_name)
+        society = request.user.society
+        if society.id != id:
+            return HttpResponseForbidden("You don't have permission to access this society's profile.")
+
+    # print(f"{request.user=}")
+    
+    # if request.user.is_superuser:
+    #     subadmins = UserDetails.objects.filter(society_sub__id=id)
+    # else:
+    #     user = get_object_or_404(User, id=id)
+    subadmins = UserDetails.objects.filter(id=society.id)
         
-        
-    return render(request, 'registration/subadmin_list.html', {'subadmins': subadmins, 'society_id': society_id})
+    return render(request, 'registration/subadmin_list.html', {'subadmins': subadmins, 'id': id})
 
 
+def id_add_subadmin(request, id):
+    if request.user.is_superuser:
+        society = get_object_or_404(Society, pk=id)
+    elif request.user.is_admin:
+        if id == request.user.id:
+            society = request.user.society
+        else:
+            society = get_object_or_404(Society, pk=id)
+    else:
+        society = request.user.society
+        if society.id != id:
+            return HttpResponseForbidden("You don't have permission to access this society's profile.")
 
-def society_id_add_subadmin(request, society_id):
+ 
+    # subadmins = UserDetails.objects.filter(id=society.id)
     if request.method == 'POST':
         form = SubadminForm(request.POST)
 
@@ -525,36 +510,33 @@ def society_id_add_subadmin(request, society_id):
             phone = form.cleaned_data.get('phone_no')
             email = form.cleaned_data.get('email')
             flat_number = form.cleaned_data.get('flat_number')
-            # flat_type = form.cleaned_data.get('flat_type')
 
             user_exist_by_phone = User.objects.filter(phone_number=phone).first()
             user_exist_by_email = User.objects.filter(email=email).first()
 
             if not user_exist_by_phone and not user_exist_by_email:
-                society=None
+                society = None
                 if request.user.is_superuser:
-                    society = Society.objects.filter(id=society_id).first()
+                    society = Society.objects.filter(id=id).first()
                 else:
-                    use = User.objects.get(id=society_id)
-                    society = Society.objects.filter(society_name=use.society_name).first()
+                    use = User.objects.get(id=id)
+                    society = Society.objects.filter(id=use.society.id).first()
+                
                 user = User.objects.create_user(
-                    full_name=name,
+                    fullname=name,
                     phone_number=phone,
                     email=email,
-                    is_admin=False
+                    is_admin=False,
+                    society=society  
                 )
-                user.society_name=society.society_name
-                user.save()
 
-                    
                 user_details = UserDetails.objects.create(
                     user=user,
-                    role='committee_member',  # Assuming 'committee_member' is the role for subadmins
+                    role='committee_member',
                     flat_number=flat_number,
-                    # flat_type=flat_type,
                     society_sub=society,
                 )
-                return redirect('society_id_subadmin_list', society_id=society_id)
+                return redirect('id_subadmin_list', id=id)
             else:
                 if user_exist_by_phone:
                     form.add_error('phone_no', "User with this phone number already exists.")
@@ -565,7 +547,7 @@ def society_id_add_subadmin(request, society_id):
     else:
         form = SubadminForm()
 
-    return render(request, 'registration/add_subadmin.html', {'form': form, 'society_id': society_id})
+    return render(request, 'registration/add_subadmin.html', {'form': form, 'id': id})
 
 def add_subadmin(request):
     print(f"{SubadminForm=}")
@@ -584,7 +566,7 @@ def add_subadmin(request):
 
             if not user_exist_by_phone and not user_exist_by_email:
                 user = User.objects.create_user(
-                    full_name=name,
+                    fullname=name,
                     phone_number=phone,
                     email=email,
                     is_admin=False
@@ -601,7 +583,7 @@ def add_subadmin(request):
                     flat_type=flat_type,
                     society_sub=society,
                 )
-                return redirect('society_id_add_subadmin',society_id=society.id)
+                return redirect('id_add_subadmin',id=society.id)
             else:
                 if user_exist_by_phone:
                     form.add_error('phone_no', "User with this phone number already exists.")
@@ -631,23 +613,30 @@ def edit_subadmin(request, pk):
         form = SubadminForm(request.POST, instance=subadmin)
         if form.is_valid():
             form.save()
-            return redirect('subadmin_list')
+            return redirect('subadmin_list') 
     else:
         form = SubadminForm(instance=subadmin)
     return render(request, 'registration/edit_subadmin.html', {'form': form, 'subadmin': subadmin})
 
+
+
+
 def edit_user(request, user_id):
     user = get_object_or_404(User, pk=user_id)
+    
     if request.method == 'POST':
-        form = UserEditForm(request.POST, request.FILES, instance=user)
+        form = UserForm(request.POST, request.FILES, instance=user)
         if form.is_valid():
             form.save()
-            messages.success(request, 'User information updated successfully.')
-            return redirect('admin_dashboard')  # Redirect to the admin dashboard
+            messages.success(request, 'User updated successfully.')
+            return redirect('admin_dashboard', user_id=user.id)
     else:
-        form = UserEditForm(instance=user)
+        form = UserForm(instance=user)
     return render(request, 'registration/edit_user.html', {'form': form, 'user': user})
-    
+
+
+
+
 def dashboard(request):
     user = request.user
     context = {'user': user}
@@ -663,11 +652,11 @@ def dashboard(request):
     
     return render(request, 'dashboard.html', context)
 
-def get_society_details(request, society_id):
-    society = get_object_or_404(Society, id=society_id)
+def get_society_details(request, id):
+    society = get_object_or_404(Society, id=id)
     data = {
         'id': society.id,
-        'society_name': society.society_name,
+        'name': society.name,
         'type': society.type,
         'is_active': society.is_active,
     }
@@ -686,16 +675,23 @@ def delete_subadmin(request, subadmin_id):
     except UserDetails.DoesNotExist:
         return JsonResponse({'message': 'Subadmin not found'}, status=404)
     
-@require_http_methods(["DELETE"])
-def delete_society(request, society_id):
+
+
+@require_http_methods(["POST", "DELETE"])
+def delete_society(request, id):
     try:
-        society = Society.objects.get(pk=society_id)
-        # society = society.user
-        
+        society = Society.objects.get(id=id)
         society.delete()
-        return JsonResponse({'message': 'Society deleted successfully'}, status=200)
+        messages.success(request, 'Society deleted successfully')
     except Society.DoesNotExist:
-        return JsonResponse({'message': 'Society not found'}, status=404)
+        messages.error(request, 'Society not found')
+    except Exception as e:
+        messages.error(request, f'An error occurred: {str(e)}')
+    
+    return redirect('show_societies') 
+
+
+
     
 @require_http_methods(["DELETE"])
 def delete_user(request, user_id):
@@ -709,29 +705,31 @@ def delete_user(request, user_id):
 
 
 
-def society_details(request, society_id):
-    society = get_object_or_404(Society, id=society_id)
-    society_profile = Society_profile.objects.filter(society_name=society).first()
-    
-    # Debugging prints to check values
-    print(society_profile.address)  # Check if this prints the address correctly
+def society_details(request, id):
+    society = get_object_or_404(Society, id=id)
+    # Societyprofile = Societyprofile.objects.filter(name=society).first()
+
+    # print(Societyprofile.address) 
     
     return render(request, 'registration/society_details.html', {
         'society': society,
-        'society_profile': society_profile,
+        # 'Societyprofile': Societyprofile,
     })
 
 
+UserModel = get_user_model()
 
 @user_passes_test(lambda u: u.is_superuser)
-def society_id_admin_dashboard(request,society_id):
-    society = Society.objects.get(id=society_id)
-    users = UserModel.objects.filter(society_name=society.society_name)
-    # SubadminForm = UserDetails.objects.filter(role='Sub Admin',)
-    return render(request, 'registration/admin_dashboard.html', {'users': users})
+def admin_dashboard(request,id):
+    society = Society.objects.get(id=id)
+    users = User.objects.filter(name=society.name,is_admin=True)
+    return render(request, 'registration/admin_dashboard.html', {'users': users, 'society': society})
 
-
-
+@user_passes_test(lambda u: u.is_superuser)
+def id_admin_dashboard(request,id):
+    society = Society.objects.get(id=id)
+    users = User.objects.filter(is_admin=True).filter(~Q(is_staff=True))
+    return render(request, 'registration/admin_dashboard.html', {'users': users, 'society':society})
 
 
 @login_required

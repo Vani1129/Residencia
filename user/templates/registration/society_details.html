@@ -2,7 +2,7 @@
 {% load static %}
 
 {% block content %}
-<h1 class="custom-title">{{ society.society_name }}</h1>
+<h1 class="custom-title">{{ society.name }}</h1>
 <style>
   .fixed-height {
       min-height: 150px; /* Adjust the height as needed */
@@ -60,11 +60,11 @@
                 <h5 class="card-title">Society Information</h5>
             </div>
             <div class="card-body">
-                <p><strong>Address:</strong> {{ society_profile.address }}</p>
-                <p><strong>City:</strong> {{ society_profile.city }}</p>
-                <p><strong>State:</strong> {{ society_profile.state }}</p>
-                <p><strong>Pincode:</strong> {{ society_profile.zip_code }}</p>
-                <p><strong>Registration No:</strong> {{ society_profile.registration_no}}</p>
+                <p><strong>Address:</strong> {{ Societyprofile.address }}</p>
+                <p><strong>City:</strong> {{ Societyprofile.city }}</p>
+                <p><strong>State:</strong> {{ Societyprofile.state }}</p>
+                <p><strong>Pincode:</strong> {{ Societyprofile.zip_code }}</p>
+                <p><strong>Registration No:</strong> {{ Societyprofile.registration_no}}</p>
             </div>
         </div>
     </div>
@@ -74,7 +74,7 @@
                 <h5 class="card-title">Contact Information</h5>
             </div>
             <div class="card-body">
-                <p><strong>Secretary:</strong> {{user.full_name }}</p>
+                <p><strong>Secretary:</strong> {{user.fullname }}</p>
                 <p><strong>Phone:</strong> {{ user.phone_number  }}</p>
                 <p><strong>Email:</strong> {{ user.email }}</p>
                 {% comment %} <p><strong>Website:</strong> <a href="{{ society.website }}" target="_blank">{{ society.website }}</a></p> {% endcomment %}

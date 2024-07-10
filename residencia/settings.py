@@ -39,7 +39,7 @@ INSTALLED_APPS = [
     'society',
     'user',
     'securitys',
-    # 'communication',
+    'communication',
     # 'maintenance',
     'home',
     'crispy_forms',

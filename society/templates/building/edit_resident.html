@@ -1,0 +1,19 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+
+{% block content %}
+<div class="container">
+    <h2>Edit Resident</h2>
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        {% crispy resform %}
+        
+        <h3>Family Members</h3>
+        <div id="family-members">
+            {% csrf_token %}
+            {% crispy resfamily_form %}
+        </div>
+        <button type="submit" class="btn btn-primary">Save</button>
+    </form>
+</div>
+{% endblock %}
